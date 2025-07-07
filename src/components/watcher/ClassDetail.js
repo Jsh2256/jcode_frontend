@@ -44,6 +44,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import CodeIcon from '@mui/icons-material/Code';
 import ErrorIcon from '@mui/icons-material/Error';
+import { createStringSort } from '../../utils/sortHelpers';
 
 const ClassDetail = () => {
   const { user } = useAuth();
@@ -173,31 +174,16 @@ const ClassDetail = () => {
       }
       
       // 역할이 같은 경우 선택된 정렬 기준으로 정렬
-      let aValue = '';
-      let bValue = '';
+      const fieldMapping = {
+        'email': 'email',
+        'name': 'name', 
+        'studentNum': 'studentNum'
+      };
       
-      switch(sort.field) {
-        case 'email':
-          aValue = a.email || '';
-          bValue = b.email || '';
-          break;
-        case 'name':
-          aValue = a.name || '';
-          bValue = b.name || '';
-          break;
-        case 'studentNum':
-          aValue = String(a.studentNum || '');
-          bValue = String(b.studentNum || '');
-          break;
-        default:
-          aValue = a.email || '';
-          bValue = b.email || '';
-          break;
-      }
+      const fieldToSort = fieldMapping[sort.field] || 'email';
+      const sortFunction = createStringSort(fieldToSort, sort.order === 'asc');
       
-      return sort.order === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
+      return sortFunction(a, b);
     });
   };
 

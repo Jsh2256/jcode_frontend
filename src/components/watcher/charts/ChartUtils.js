@@ -1,11 +1,12 @@
 // 차트 스타일 및 유틸리티 함수
 import Plotly from 'plotly.js-dist';
+import { CHART_FONT_FAMILY } from '../../../constants/chartConfig';
 
 // 다크모드에 따른 공통 스타일 설정
 export const getChartStyles = (isDarkMode) => {
   return {
     font: {
-      family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+      family: CHART_FONT_FAMILY,
       color: isDarkMode ? '#F8F8F2' : '#282A36'
     },
     paper_bgcolor: isDarkMode ? 'rgba(40, 42, 54, 0.8)' : '#FFFFFF',
@@ -21,7 +22,7 @@ export const getChartStyles = (isDarkMode) => {
       bgcolor: isDarkMode ? '#44475A' : '#FFFFFF',
       bordercolor: isDarkMode ? '#6272A4' : '#E0E0E0',
       font: {
-        family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+        family: CHART_FONT_FAMILY,
         color: isDarkMode ? '#F8F8F2' : '#282A36',
         size: 12
       }
@@ -389,11 +390,11 @@ export const createLogYAxisLayout = (isDarkMode) => {
     title: '로그 유형',
     titlefont: {
       color: isDarkMode ? '#FFB86C' : '#FF9800',
-      family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+      family: CHART_FONT_FAMILY,
     },
     tickfont: {
       color: isDarkMode ? '#FFB86C' : '#FF9800',
-      family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+      family: CHART_FONT_FAMILY,
     },
     overlaying: 'y',
     side: 'right',

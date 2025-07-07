@@ -40,6 +40,7 @@ import api from '../../api/axios';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
+import { createStringSort } from '../../utils/sortHelpers';
 
 const Admin = () => {
   const [currentTab, setCurrentTab] = useState(0);
@@ -365,43 +366,28 @@ const Admin = () => {
 
     return filtered.sort((a, b) => {
       if (isCourseTab) {
-        // 수업 테이블 컬럼에 맞는 정렬
-        let aValue, bValue;
-        switch (sort.field) {
-          case 'name':
-            aValue = a.courseName || '';
-            bValue = b.courseName || '';
-            break;
-          case 'code':
-            aValue = a.courseCode || '';
-            bValue = b.courseCode || '';
-            break;
-          case 'year':
-          case 'term':
-          case 'clss':
-            aValue = Number(a[sort.field]) || 0;
-            bValue = Number(b[sort.field]) || 0;
-            return sort.order === 'asc' ? aValue - bValue : bValue - aValue;
-          default:
-            aValue = a[sort.field] || '';
-            bValue = b[sort.field] || '';
+        // 수업 테이블의 숫자 필드들
+        const numberFields = ['year', 'term', 'clss'];
+        if (numberFields.includes(sort.field)) {
+          const aValue = Number(a[sort.field]) || 0;
+          const bValue = Number(b[sort.field]) || 0;
+          return sort.order === 'asc' ? aValue - bValue : bValue - aValue;
         }
-        return sort.order === 'asc'
-          ? String(aValue).localeCompare(String(bValue))
-          : String(bValue).localeCompare(String(aValue));
+        
+        // 수업 테이블의 문자열 필드들
+        const fieldMapping = {
+          'name': 'courseName',
+          'code': 'courseCode'
+        };
+        const fieldToSort = fieldMapping[sort.field] || sort.field;
+        const sortFunction = createStringSort(fieldToSort, sort.order === 'asc');
+        return sortFunction(a, b);
       }
 
-      let aValue = a[sort.field] || '';
-      let bValue = b[sort.field] || '';
-      
-      if (sort.field === 'studentId') {
-        aValue = a.studentId || '';
-        bValue = b.studentId || '';
-      }
-
-      return sort.order === 'asc'
-        ? String(aValue).localeCompare(String(bValue))
-        : String(bValue).localeCompare(String(aValue));
+      // 일반 사용자 테이블
+      const fieldToSort = sort.field === 'studentId' ? 'studentId' : sort.field;
+      const sortFunction = createStringSort(fieldToSort, sort.order === 'asc');
+      return sortFunction(a, b);
     });
   };
 

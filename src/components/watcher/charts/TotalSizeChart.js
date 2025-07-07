@@ -7,6 +7,7 @@ import {
   findNearestLog,
   getTimeFormatStops 
 } from './ChartUtils';
+import { CHART_FONT_FAMILY } from '../../../constants/chartConfig';
 
 // 차트 간 동기화를 위한 이벤트 버스
 export const chartSyncEvents = {
@@ -41,7 +42,7 @@ const TotalSizeChart = ({ data, student, assignment, runLogs = [], buildLogs = [
           const emptyLayout = {
             title: '데이터가 없습니다',
             font: {
-              family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              family: CHART_FONT_FAMILY,
               color: isDarkMode ? '#F8F8F2' : '#282A36'
             },
             paper_bgcolor: isDarkMode ? 'rgba(40, 42, 54, 0.8)' : '#FFFFFF',
@@ -50,7 +51,7 @@ const TotalSizeChart = ({ data, student, assignment, runLogs = [], buildLogs = [
               text: '해당 데이터가 없거나 로드하는데 실패했습니다',
               showarrow: false,
               font: {
-                family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                family: CHART_FONT_FAMILY,
                 size: 14
               },
               x: 0.5,
@@ -123,7 +124,7 @@ const TotalSizeChart = ({ data, student, assignment, runLogs = [], buildLogs = [
         const totalLayout = {
           title: '전체 코드 크기 변화 및 로그 기록',
           font: {
-            family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+            family: CHART_FONT_FAMILY,
             color: isDarkMode ? '#F8F8F2' : '#282A36'
           },
           paper_bgcolor: isDarkMode ? 'rgba(40, 42, 54, 0.8)' : '#FFFFFF',
@@ -146,11 +147,11 @@ const TotalSizeChart = ({ data, student, assignment, runLogs = [], buildLogs = [
             title: '로그 유형',
             titlefont: {
               color: isDarkMode ? '#FFB86C' : '#FF9800',
-              family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              family: CHART_FONT_FAMILY,
             },
             tickfont: {
               color: isDarkMode ? '#FFB86C' : '#FF9800',
-              family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              family: CHART_FONT_FAMILY,
             },
             showgrid: false,
             range: [0, 5],
@@ -187,7 +188,7 @@ const TotalSizeChart = ({ data, student, assignment, runLogs = [], buildLogs = [
             bgcolor: isDarkMode ? '#44475A' : '#FFFFFF',
             bordercolor: isDarkMode ? '#6272A4' : '#E0E0E0',
             font: {
-              family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              family: CHART_FONT_FAMILY,
               color: isDarkMode ? '#F8F8F2' : '#282A36',
               size: 12
             }

@@ -49,6 +49,7 @@ import {
   fetchUserCoursesDetails,
   fetchMonitoringData
 } from './charts/api';
+import { sortByName, sortByStudentNum, sortByChanges, createStringSort } from '../../utils/sortHelpers';
 
 // TabPanel 컴포넌트
 function TabPanel(props) {
@@ -498,23 +499,17 @@ const AssignmentDetail = () => {
 
   // 정렬 핸들러
   const handleSortByName = () => {
-    const sorted = [...chartData].sort((a, b) => {
-      return (a.name || '').localeCompare(b.name || '');
-    });
+    const sorted = sortByName(chartData);
     setChartData(sorted);
   };
 
   const handleSortByChanges = () => {
-    const sorted = [...chartData].sort((a, b) => {
-      return (b.size_change || 0) - (a.size_change || 0);
-    });
+    const sorted = sortByChanges(chartData);
     setChartData(sorted);
   };
 
   const handleSortByStudentNum = () => {
-    const sorted = [...chartData].sort((a, b) => {
-      return String(a.student_num || '').localeCompare(String(b.student_num || ''));
-    });
+    const sorted = sortByStudentNum(chartData);
     setChartData(sorted);
   };
 
@@ -553,33 +548,16 @@ const AssignmentDetail = () => {
     });
     
     // 정렬
-    return filtered.sort((a, b) => {
-      let aValue, bValue;
-      switch(sort.field) {
-        case 'name':
-          aValue = a.name || '';
-          bValue = b.name || '';
-          break;
-        case 'email':
-          aValue = a.email || '';
-          bValue = b.email || '';
-          break;
-        case 'studentNum':
-          aValue = String(a.studentNum || '');
-          bValue = String(b.studentNum || '');
-          break;
-        default:
-          aValue = '';
-          bValue = '';
-      }
-      
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sort.order === 'asc' ? aValue - bValue : bValue - aValue;
-      }
-      return sort.order === 'asc' 
-        ? String(aValue).localeCompare(String(bValue))
-        : String(bValue).localeCompare(String(aValue));
-    });
+    const fieldMapping = {
+      'name': 'name',
+      'email': 'email',
+      'studentNum': 'studentNum'
+    };
+    
+    const fieldToSort = fieldMapping[sort.field] || 'name';
+    const sortFunction = createStringSort(fieldToSort, sort.order === 'asc');
+    
+    return filtered.sort(sortFunction);
   };
 
   // JCode 리다이렉션 핸들러 수정

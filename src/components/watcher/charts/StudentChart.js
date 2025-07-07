@@ -4,6 +4,9 @@ import StudentSelector from './StudentSelector';
 import { cleanupChartInstance } from './api';
 import { useAuth } from '../../../contexts/AuthContext';
 import api from '../../../api/axios';
+import { formatBytes } from '../../../utils/formatters';
+import { sortByName, sortByStudentNum, sortByChanges } from '../../../utils/sortHelpers';
+import { getChartStyles } from './ChartUtils';
 
 const StudentChart = ({ data, searchQuery, userRole, onStudentClick }) => {
   const theme = useTheme();
@@ -52,46 +55,15 @@ const StudentChart = ({ data, searchQuery, userRole, onStudentClick }) => {
   // console.log('StudentChart 검색어:', searchQuery);
   // console.log('StudentChart 사용자 역할:', userRole);
 
-  // 차트 스타일 설정
-  const getChartStyles = () => {
-    return {
-      font: {
-        family: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-        color: isDarkMode ? '#F8F8F2' : '#282A36'
-      },
-      paper_bgcolor: isDarkMode ? 'rgba(40, 42, 54, 0.8)' : '#FFFFFF',
-      plot_bgcolor: isDarkMode ? 'rgba(40, 42, 54, 0.4)' : '#FFFFFF',
-      gridcolor: isDarkMode ? '#44475A' : '#E0E0E0',
-    };
-  };
+  // getChartStyles는 ChartUtils.js에서 import하여 사용
 
-  // 포맷 함수 정의
-  const formatBytes = (bytes, decimals = 2) => {
-    if (Math.abs(bytes) >= 1048576) {
-      return `${(bytes / 1048576).toFixed(decimals)}MB`;
-    } else if (Math.abs(bytes) >= 1024) {
-      return `${(bytes / 1024).toFixed(decimals)}KB`;
-    }
-    return `${Math.round(bytes)}B`;
-  };
+  // formatBytes는 utils/formatters.js에서 import하여 사용
 
   // 버튼 클릭 핸들러 - 이름 정렬
   const handleSortByName = useCallback(() => {
-    //console.log('이름순 정렬 수행');
-    if (processedData.length === 0) {
-      //console.warn('정렬할 데이터가 없습니다');
-      return;
-    }
+    if (processedData.length === 0) return;
     
-    const sorted = [...processedData].sort((a, b) => {
-      // 확인된 정확한 이름 필드 사용
-      const aName = a.name || '';
-      const bName = b.name || '';
-      // 이름 비교
-      return aName.localeCompare(bName);
-    });
-    
-    //console.log('정렬 결과:', sorted.length, '항목');
+    const sorted = sortByName(processedData);
     setProcessedData(sorted);
     // 즉시 차트 업데이트
     cleanupChart();
@@ -100,20 +72,9 @@ const StudentChart = ({ data, searchQuery, userRole, onStudentClick }) => {
 
   // 버튼 클릭 핸들러 - 학번 정렬
   const handleSortByStudentNum = useCallback(() => {
-    //console.log('학번순 정렬 수행');
-    if (processedData.length === 0) {
-      //console.warn('정렬할 데이터가 없습니다');
-      return;
-    }
+    if (processedData.length === 0) return;
     
-    const sorted = [...processedData].sort((a, b) => {
-      // 확인된 정확한 학번 필드 사용
-      const numA = String(a.student_num || '');
-      const numB = String(b.student_num || '');
-      return numA.localeCompare(numB);
-    });
-    
-    //console.log('정렬 결과:', sorted.length, '항목');
+    const sorted = sortByStudentNum(processedData);
     setProcessedData(sorted);
     // 즉시 차트 업데이트
     cleanupChart();
@@ -122,18 +83,9 @@ const StudentChart = ({ data, searchQuery, userRole, onStudentClick }) => {
 
   // 버튼 클릭 핸들러 - 변화량 정렬
   const handleSortByChanges = useCallback(() => {
-    //console.log('변화량순 정렬 수행');
-    if (processedData.length === 0) {
-      //console.warn('정렬할 데이터가 없습니다');
-      return;
-    }
+    if (processedData.length === 0) return;
     
-    const sorted = [...processedData].sort((a, b) => {
-      // 내림차순 정렬 (큰 값이 먼저)
-      return (b.size_change || 0) - (a.size_change || 0);
-    });
-    
-    //console.log('정렬 결과:', sorted.length, '항목');
+    const sorted = sortByChanges(processedData); // 기본적으로 내림차순
     setProcessedData(sorted);
     // 즉시 차트 업데이트
     cleanupChart();
@@ -331,7 +283,7 @@ const StudentChart = ({ data, searchQuery, userRole, onStudentClick }) => {
       plotlyInstance.current = Plotly;
       
       const chartData = prepareChartData();
-      const styles = getChartStyles();
+      const styles = getChartStyles(isDarkMode);
       
       // 데이터가 없는 경우
       if (chartData.labels.length === 0) {
