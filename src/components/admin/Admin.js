@@ -41,6 +41,7 @@ import { toast } from 'react-toastify';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { createStringSort } from '../../utils/sortHelpers';
+import { LoadingSpinner } from '../ui';
 
 const Admin = () => {
   const [currentTab, setCurrentTab] = useState(0);
@@ -445,11 +446,7 @@ const Admin = () => {
     const sectionKey = Object.keys(sections)[currentTab];
 
     if (loading) {
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      );
+      return <LoadingSpinner minHeight="200px" sx={{ p: 3 }} />;
     }
 
     return (

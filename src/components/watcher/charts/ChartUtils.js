@@ -1,5 +1,4 @@
 // 차트 스타일 및 유틸리티 함수
-import Plotly from 'plotly.js-dist';
 import { CHART_FONT_FAMILY } from '../../../constants/chartConfig';
 
 // 다크모드에 따른 공통 스타일 설정
@@ -113,44 +112,10 @@ export const getHoverTemplate = (type, includeDate = true) => {
   }
 };
 
-// 빈 데이터를 위한 차트 생성
-export const createEmptyChart = (chartId, isDarkMode, title = '데이터가 없습니다') => {
-  const styles = getChartStyles(isDarkMode);
-  
-  const emptyTrace = {
-    x: [],
-    y: [],
-    type: 'scatter',
-    mode: 'lines+markers',
-    name: '데이터 없음'
-  };
-  
-  const emptyLayout = {
-    title: title,
-    font: styles.font,
-    paper_bgcolor: styles.paper_bgcolor,
-    plot_bgcolor: styles.plot_bgcolor,
-    dragmode: 'pan', // 기본 드래그 모드를 pan으로 설정
-    annotations: [{
-      text: '해당 데이터가 없거나 로드하는데 실패했습니다',
-      showarrow: false,
-      font: {
-        family: styles.font.family,
-        size: 14
-      },
-      x: 0.5,
-      y: 0.5,
-      xref: 'paper',
-      yref: 'paper'
-    }]
-  };
-  
-  const element = document.getElementById(chartId);
-  if (element) {
-    return Plotly.newPlot(chartId, [emptyTrace], emptyLayout);
-  }
-  return null;
-};
+// 빈 데이터를 위한 차트 생성 - 이제 PlotlyChart 컴포넌트에서 처리됨
+// export const createEmptyChart = (chartId, isDarkMode, title = '데이터가 없습니다') => {
+//   // PlotlyChart 컴포넌트가 빈 데이터 처리를 담당하므로 더 이상 필요하지 않음
+// };
 
 // 가상 타임스탬프 생성
 export const generateFakeTimestamps = (dataLength) => {
@@ -176,53 +141,11 @@ export const getImageSaveOptions = (student, assignment, chartType) => {
   };
 };
 
-// 차트 동기화 설정
-export const setupChartSync = (chartId, otherChartId, chartSyncEvents) => {
-  const element = document.getElementById(chartId);
-  
-  if (element) {
-    element.on('plotly_relayout', function(eventData) {
-      // 이미 동기화 중이면 무시
-      if (chartSyncEvents.isSyncing) return;
-      
-      // 디바운스 적용
-      if (chartSyncEvents.debounceTimeout) {
-        clearTimeout(chartSyncEvents.debounceTimeout);
-      }
-      
-      chartSyncEvents.debounceTimeout = setTimeout(() => {
-        if (eventData['xaxis.range[0]'] !== undefined && eventData['xaxis.range[1]'] !== undefined) {
-          try {
-            // 동기화 상태 설정
-            chartSyncEvents.isSyncing = true;
-            
-            // xAxis 범위가 변경되면 이벤트 발생
-            chartSyncEvents.xAxisUpdate = {
-              source: chartId,
-              range: [eventData['xaxis.range[0]'], eventData['xaxis.range[1]']]
-            };
-            
-            // 다른 차트 동기화
-            const otherElement = document.getElementById(otherChartId);
-            if (otherElement && chartSyncEvents.xAxisUpdate.source !== otherChartId) {
-              Plotly.relayout(otherChartId, {
-                'xaxis.range[0]': eventData['xaxis.range[0]'],
-                'xaxis.range[1]': eventData['xaxis.range[1]']
-              });
-            }
-            
-            // 동기화 완료 후 상태 해제
-            setTimeout(() => {
-              chartSyncEvents.isSyncing = false;
-            }, 100);
-          } catch (err) {
-            chartSyncEvents.isSyncing = false;
-          }
-        }
-      }, 200); // 200ms 디바운스
-    });
-  }
-};
+// 차트 동기화 설정 - PlotlyChart 컴포넌트에서 처리하도록 변경 예정
+// export const setupChartSync = (chartId, otherChartId, chartSyncEvents) => {
+//   // 향후 PlotlyChart 컴포넌트 차원에서 차트 동기화 기능을 구현할 예정
+//   console.warn('setupChartSync는 더 이상 사용되지 않습니다. PlotlyChart 컴포넌트를 사용하세요.');
+// };
 
 // 로그 카테고리 정의
 export const LOG_CATEGORIES = {

@@ -43,6 +43,7 @@ import {
 import api from '../../api/axios';
 import { useAuth } from '../../contexts/AuthContext';
 import CacheManager from '../../utils/cache-manager';
+import { LoadingSpinner } from '../ui';
 
 // ChartHeader 컴포넌트
 const ChartHeader = ({ student, assignment, course }) => {
@@ -751,11 +752,7 @@ const AssignmentPlotly = () => {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

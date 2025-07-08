@@ -45,6 +45,8 @@ import { toast } from 'react-toastify';
 import CodeIcon from '@mui/icons-material/Code';
 import ErrorIcon from '@mui/icons-material/Error';
 import { createStringSort } from '../../utils/sortHelpers';
+import { LoadingSpinner } from '../ui';
+import { FONT_FAMILY } from '../../constants/uiConstants';
 
 const ClassDetail = () => {
   const { user } = useAuth();
@@ -363,11 +365,7 @@ const ClassDetail = () => {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {
@@ -377,7 +375,7 @@ const ClassDetail = () => {
           <Typography 
             color="error" 
             align="center"
-            sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
+            sx={{ fontFamily: FONT_FAMILY }}
           >
             {error}
           </Typography>
@@ -427,12 +425,12 @@ const ClassDetail = () => {
               alignItems: 'center',
               color: 'text.secondary',
               fontSize: '0.875rem',
-              fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif"
+              fontFamily: FONT_FAMILY
             }}>
               <Typography 
                 variant="h6" 
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   color: 'text.primary'
                 }}
               >
@@ -496,13 +494,13 @@ const ClassDetail = () => {
                 label="학생" 
                 value="students"
                 iconPosition="start"
-                sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                  textTransform: 'none',
-                  minHeight: '40px',
-                  alignItems: 'center'
-                }}
-              />
+                              sx={{ 
+                fontFamily: FONT_FAMILY,
+                textTransform: 'none',
+                minHeight: '40px',
+                alignItems: 'center'
+              }}
+            />
             )}
             <Tab 
               icon={<AssignmentIcon sx={{ fontSize: '1.2rem', mr: 1 }} />} 
@@ -510,7 +508,7 @@ const ClassDetail = () => {
               value="assignments"
               iconPosition="start"
               sx={{ 
-                fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                fontFamily: FONT_FAMILY,
                 textTransform: 'none',
                 minHeight: '40px',
                 alignItems: 'center'
@@ -537,10 +535,10 @@ const ClassDetail = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold', width: '60px' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold', width: '60px' }}>
                           No.
                         </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           학번
                           <IconButton size="small" onClick={() => toggleSort('studentNum')} sx={{ ml: 1 }}>
                             <Box sx={{ 
@@ -553,7 +551,7 @@ const ClassDetail = () => {
                             </Box>
                           </IconButton>
                         </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           이름
                           <IconButton size="small" onClick={() => toggleSort('name')} sx={{ ml: 1 }}>
                             <Box sx={{ 
@@ -566,7 +564,7 @@ const ClassDetail = () => {
                             </Box>
                           </IconButton>
                         </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           이메일
                           <IconButton size="small" onClick={() => toggleSort('email')} sx={{ ml: 1 }}>
                             <Box sx={{ 
@@ -579,7 +577,7 @@ const ClassDetail = () => {
                             </Box>
                           </IconButton>
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell align="right" sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           작업
                         </TableCell>
                       </TableRow>
@@ -615,10 +613,10 @@ const ClassDetail = () => {
                             }
                           }}
                         >
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", textAlign: 'center' }}>
+                          <TableCell sx={{ fontFamily: FONT_FAMILY, textAlign: 'center' }}>
                             {index + 1}
                           </TableCell>
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
+                          <TableCell sx={{ fontFamily: FONT_FAMILY }}>
                             {student.studentNum}
                             {student.courseRole === 'PROFESSOR' && (
                               <Chip
@@ -651,10 +649,10 @@ const ClassDetail = () => {
                               />
                             )}
                           </TableCell>
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
+                          <TableCell sx={{ fontFamily: FONT_FAMILY }}>
                             {student.name}
                           </TableCell>
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
+                          <TableCell sx={{ fontFamily: FONT_FAMILY }}>
                             {student.email}
                           </TableCell>
                           <TableCell align="right">
@@ -674,7 +672,7 @@ const ClassDetail = () => {
                                     });
                                   }}
                                   sx={{ 
-                                    fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                                    fontFamily: FONT_FAMILY,
                                     fontSize: '0.75rem',
                                     py: 0.5,
                                     px: 1.5,
@@ -700,7 +698,7 @@ const ClassDetail = () => {
                                     setOpenPromoteDialog(true);
                                   }}
                                   sx={{ 
-                                    fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                                    fontFamily: FONT_FAMILY,
                                     fontSize: '0.75rem',
                                     py: 0.5,
                                     px: 1.5,
@@ -743,7 +741,7 @@ const ClassDetail = () => {
                                         style: {
                                           background: isDarkMode ? '#d32f2f' : '#f44336',
                                           color: '#fff',
-                                          fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                                          fontFamily: FONT_FAMILY,
                                           borderRadius: '8px',
                                           fontSize: '0.95rem',
                                           padding: '12px 20px',
@@ -758,7 +756,7 @@ const ClassDetail = () => {
                                     }
                                   }}
                                   sx={{ 
-                                    fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                                    fontFamily: FONT_FAMILY,
                                     fontSize: '0.75rem',
                                     py: 0.5,
                                     px: 1.5,
@@ -779,13 +777,13 @@ const ClassDetail = () => {
                 </TableContainer>
 
                 {getFilteredAndSortedStudents().length === 0 && (
-                  <Typography 
-                    sx={{ 
-                      mt: 2, 
-                      textAlign: 'center',
-                      fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif"
-                    }}
-                  >
+                                  <Typography 
+                  sx={{ 
+                    mt: 2, 
+                    textAlign: 'center',
+                    fontFamily: FONT_FAMILY
+                  }}
+                >
                     {searchQuery ? '검색 결과가 없습니다.' : '등록된 학생이 없습니다.'}
                   </Typography>
                 )}
@@ -801,25 +799,25 @@ const ClassDetail = () => {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           과제코드
                         </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           과제명
                         </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           시작일
                         </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold' }}>
                           마감일
                         </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold', width: '250px' }}>
+                        <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold', width: '250px' }}>
                           남은 시간
                         </TableCell>
                         {user?.role !== 'STUDENT' && (
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold', width: '100px' }}>
-                            작업
-                          </TableCell>
+                                                      <TableCell sx={{ fontFamily: FONT_FAMILY, fontWeight: 'bold', width: '100px' }}>
+                              작업
+                            </TableCell>
                         )}
                       </TableRow>
                     </TableHead>
@@ -838,14 +836,14 @@ const ClassDetail = () => {
                         >
                           <TableCell 
                             onClick={() => navigate(`/watcher/class/${courseId}/assignment/${assignment.assignmentId}`)}
-                            sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
+                            sx={{ fontFamily: FONT_FAMILY }}
                           >
                             {assignment.assignmentName}
                           </TableCell>
                           <TableCell 
                             onClick={() => navigate(`/watcher/class/${courseId}/assignment/${assignment.assignmentId}`)}
                             sx={{ 
-                              fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                              fontFamily: FONT_FAMILY,
                               maxWidth: '300px',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -856,7 +854,7 @@ const ClassDetail = () => {
                           </TableCell>
                           <TableCell 
                             onClick={() => navigate(`/watcher/class/${courseId}/assignment/${assignment.assignmentId}`)}
-                            sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
+                            sx={{ fontFamily: FONT_FAMILY }}
                           >
                             {new Date(assignment.kickoffDate).toLocaleDateString('ko-KR', {
                               year: 'numeric',
@@ -868,7 +866,7 @@ const ClassDetail = () => {
                           </TableCell>
                           <TableCell 
                             onClick={() => navigate(`/watcher/class/${courseId}/assignment/${assignment.assignmentId}`)}
-                            sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
+                            sx={{ fontFamily: FONT_FAMILY }}
                           >
                             {new Date(assignment.deadlineDate).toLocaleDateString('ko-KR', {
                               year: 'numeric',
@@ -984,7 +982,7 @@ const ClassDetail = () => {
                               }}
                             >
                               <AddIcon />
-                              <Typography sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
+                              <Typography sx={{ fontFamily: FONT_FAMILY }}>
                                 새 과제 추가
                               </Typography>
                             </Box>
@@ -1011,7 +1009,7 @@ const ClassDetail = () => {
           >
             <DialogTitle 
               sx={{ 
-                fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontSize: '1.5rem',
                 py: 3
               }}
@@ -1021,7 +1019,7 @@ const ClassDetail = () => {
             <DialogContent>
               <Box sx={{ mb: 3, p: 2, bgcolor: 'info.light', borderRadius: 1, color: 'info.contrastText' }}>
                 <Typography sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.875rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -1166,7 +1164,7 @@ const ClassDetail = () => {
                 variant="outlined"
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1190,7 +1188,7 @@ const ClassDetail = () => {
                   isAssignmentCodeExists(newAssignment.assignmentName)
                 }
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1221,7 +1219,7 @@ const ClassDetail = () => {
           >
             <DialogTitle 
               sx={{ 
-                fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                fontFamily: FONT_FAMILY,
                 fontSize: '1.5rem',
                 py: 3
               }}
@@ -1231,7 +1229,7 @@ const ClassDetail = () => {
             <DialogContent>
               <Box sx={{ mb: 3, p: 2, bgcolor: 'info.light', borderRadius: 1, color: 'info.contrastText' }}>
                 <Typography sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.875rem',
                   display: 'flex',
                   alignItems: 'center',
@@ -1381,7 +1379,7 @@ const ClassDetail = () => {
                 variant="outlined"
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1406,7 +1404,7 @@ const ClassDetail = () => {
                    editingAssignment?.assignmentName !== editingAssignment?.originalAssignmentName)
                 }
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1431,14 +1429,14 @@ const ClassDetail = () => {
             fullWidth
           >
             <DialogTitle sx={{ 
-              fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontSize: '1.25rem',
               py: 3
             }}>
               과제 삭제 확인
             </DialogTitle>
             <DialogContent>
-              <Typography sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
+              <Typography sx={{ fontFamily: FONT_FAMILY }}>
                 정말로 "{deletingAssignment?.assignmentName}" 과제를 삭제하시겠습니까?
                 <br />
                 이 작업은 되돌릴 수 없습니다.
@@ -1453,7 +1451,7 @@ const ClassDetail = () => {
                 variant="outlined"
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1470,7 +1468,7 @@ const ClassDetail = () => {
                 color="error"
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1495,7 +1493,7 @@ const ClassDetail = () => {
             fullWidth
           >
             <DialogTitle sx={{ 
-              fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              fontFamily: FONT_FAMILY,
               fontSize: '1.25rem',
               py: 3
             }}>
@@ -1504,7 +1502,7 @@ const ClassDetail = () => {
             <DialogContent>
               <Box sx={{ mb: 2 }}>
                 <Typography sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   mb: 2 
                 }}>
                   {promotingStudent?.name}님의 권한을 변경합니다.
@@ -1535,7 +1533,7 @@ const ClassDetail = () => {
                 variant="outlined"
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1552,7 +1550,7 @@ const ClassDetail = () => {
                 color="warning"
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1574,7 +1572,7 @@ const ClassDetail = () => {
             fullWidth
           >
             <DialogTitle sx={{ 
-              fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+              fontFamily: FONT_FAMILY,
               color: '#f44336'
             }}>
               사용자 탈퇴 확인
@@ -1614,7 +1612,7 @@ const ClassDetail = () => {
                 variant="outlined"
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,
@@ -1632,7 +1630,7 @@ const ClassDetail = () => {
                 disabled={withdrawDialog.confirmText !== '사용자를 탈퇴시키겠습니다'}
                 size="small"
                 sx={{ 
-                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+                  fontFamily: FONT_FAMILY,
                   fontSize: '0.75rem',
                   py: 0.5,
                   px: 1.5,

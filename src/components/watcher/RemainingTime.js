@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Typography } from '@mui/material';
 import { useTheme } from '../../contexts/ThemeContext';
+import { FONT_FAMILY } from '../../constants/uiConstants';
 
 const RemainingTime = ({ deadline }) => {
   const [timeLeft, setTimeLeft] = useState('');
@@ -57,7 +58,7 @@ const RemainingTime = ({ deadline }) => {
   return (
     <Typography
       sx={{ 
-        fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
+        fontFamily: FONT_FAMILY,
         color: getTimeColor(new Date(deadline) - new Date(), isDarkMode),
         fontWeight: 'medium'
       }}

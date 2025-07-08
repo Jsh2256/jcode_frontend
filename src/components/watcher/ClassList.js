@@ -15,7 +15,6 @@ import {
   MenuItem,
   Stack,
   Fade,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -36,6 +35,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAuth } from '../../contexts/AuthContext';
+import { LoadingSpinner, Button } from '../ui';
 
 const ClassList = () => {
   const { user } = useAuth();
@@ -210,11 +210,7 @@ const ClassList = () => {
   };
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

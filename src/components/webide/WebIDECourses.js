@@ -34,6 +34,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { LoadingSpinner } from '../ui';
 
 const WebIDECourses = () => {
   const { user } = useAuth();
@@ -325,11 +326,7 @@ const WebIDECourses = () => {
   });
 
   if (loading) {
-    return (
-      <Container sx={{ mt: 4, textAlign: 'center' }}>
-        <CircularProgress />
-      </Container>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

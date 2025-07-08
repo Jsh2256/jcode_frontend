@@ -50,6 +50,7 @@ import {
   fetchMonitoringData
 } from './charts/api';
 import { sortByName, sortByStudentNum, sortByChanges, createStringSort } from '../../utils/sortHelpers';
+import { LoadingSpinner } from '../ui';
 
 // TabPanel 컴포넌트
 function TabPanel(props) {
@@ -668,11 +669,7 @@ const AssignmentDetail = () => {
   }, [submissions, searchQuery, sort]);
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner />;
   }
 
   if (error) {

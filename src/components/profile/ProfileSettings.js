@@ -21,6 +21,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import SchoolIcon from '@mui/icons-material/School';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import { getAvatarUrl, getRandomStyle } from '../../utils/avatar';
+import { LoadingSpinner } from '../ui';
 
 const TabPanel = (props) => {
   const { children, value, index, ...other } = props;
@@ -152,11 +153,7 @@ const ProfileSettings = () => {
   };
 
   if (loading) {
-    return (
-      <Container maxWidth="md" sx={{ mt: 12, mb: 4, display: 'flex', justifyContent: 'center' }}>
-        <CircularProgress />
-      </Container>
-    );
+    return <LoadingSpinner sx={{ mt: 12, mb: 4 }} />;
   }
 
   return (
