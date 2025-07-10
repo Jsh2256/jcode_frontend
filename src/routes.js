@@ -1,10 +1,10 @@
 import LoginPage from './pages/auth/LoginPage';
 import WatcherPage from './pages/watcher/WatcherPage';
 import AdminPage from './pages/admin/AdminPage';
-import WebIDECourses from './components/webide/WebIDECourses';
-import ProfileSetup from './components/auth/ProfileSetup';
-import ProfileSettings from './components/profile/ProfileSettings';
-import AboutPage from './pages/about/AboutPage';
+import { WebIDECourses } from './features/webide';
+import { ProfileSetup } from './features/auth';
+import { ProfileSettings } from './features/profile';
+import { AboutPage } from './features/about';
 //import HomePage from './pages/HomePage';
 
 export const routes = [
