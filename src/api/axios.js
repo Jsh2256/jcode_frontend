@@ -2,6 +2,9 @@ import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
 
+// 새로운 API 서비스 import
+import { userService, authService } from '../services/api';
+
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   headers: {
@@ -138,15 +141,9 @@ export const auth = {
 
   logout: async () => {
     try {
-      const token = sessionStorage.getItem('jwt');
-      sessionStorage.removeItem('jwt');
-      await api.post('/logout', null, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      window.location.href = '/login';
+      await authService.logout();
     } catch (error) {
+      // 에러 처리는 서비스 내에서 처리됨
       sessionStorage.removeItem('jwt');
       window.location.href = '/login';
     }
@@ -154,20 +151,18 @@ export const auth = {
 
   getUserProfile: async () => {
     try {
-      const response = await api.get('/api/users/me');
-      return response;
+      const data = await userService.getCurrentUser();
+      return { data }; // 기존 인터페이스 유지
     } catch (error) {
-      toast.error('사용자 프로필을 가져오는데 실패했습니다.');
       throw error;
     }
   },
 
   updateUserProfile: async (profileData) => {
     try {
-      const response = await api.put('/api/users/me', profileData);
-      return response;
+      const data = await userService.updateCurrentUser(profileData);
+      return { data }; // 기존 인터페이스 유지  
     } catch (error) {
-      toast.error('프로필 업데이트에 실패했습니다.');
       throw error;
     }
   },
