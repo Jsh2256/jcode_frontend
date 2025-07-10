@@ -30,9 +30,7 @@ import { selectStyles } from '../../../styles/selectStyles';
 import AddIcon from '@mui/icons-material/Add';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../../contexts/ThemeContext';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
-import { useNavigate } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { LoadingSpinner } from '../../../components/ui';
 
@@ -139,23 +137,7 @@ const WebIDECourses = () => {
       
     } catch (err) {
       // 에러 처리 (토스트는 서비스에서 이미 표시됨)
-      toast.error('Web-IDE 연결에 실패했습니다. 잠시 후 다시 시도해주세요.', {
-        icon: ({theme, type}) => <ErrorIcon sx={{ color: '#fff', fontSize: '1.5rem', mr: 1 }}/>,
-        style: {
-          background: isDarkMode ? '#d32f2f' : '#f44336',
-          color: '#fff',
-          fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-          borderRadius: '8px',
-          fontSize: '0.95rem',
-          padding: '12px 20px',
-          maxWidth: '500px',
-          width: 'auto',
-          textOverflow: 'ellipsis',
-          overflow: 'hidden',
-          display: 'flex',
-          alignItems: 'center'
-        }
-      });
+      console.error('Web-IDE 연결 실패:', err);
     }
   };
 
@@ -180,28 +162,8 @@ const WebIDECourses = () => {
           })
         });
       } catch (jcodeError) {
-        // JCode 생성 실패 시 오류 메시지 표시
-        toast.error('JCode 생성에 실패했습니다. 나중에 다시 시도해주세요.', {
-          icon: ({theme, type}) => <ErrorIcon sx={{ 
-            color: '#fff',
-            fontSize: '1.5rem',
-            mr: 1
-          }}/>,
-          style: {
-            background: isDarkMode ? '#d32f2f' : '#f44336',
-            color: '#fff',
-            fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-            borderRadius: '8px',
-            fontSize: '0.95rem',
-            padding: '12px 20px',
-            maxWidth: '500px',
-            width: 'auto',
-            textOverflow: 'ellipsis',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center'
-          }
-        });
+        // JCode 생성 실패 시 콘솔에만 로그 (치명적 오류가 아니므로)
+        console.warn('JCode 생성 실패:', jcodeError);
       }
       
       // 수업 목록 새로고침
@@ -262,29 +224,10 @@ const WebIDECourses = () => {
         doubleCheck: false
       });
       
-      toast.success('강의 탈퇴가 완료되었습니다.', {
-        icon: ({theme, type}) => <CheckCircleIcon sx={{ color: '#fff', fontSize: '1.5rem', mr: 1 }}/>,
-        style: {
-          background: isDarkMode ? '#2e7d32' : '#4caf50',
-          color: '#fff',
-          fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-          borderRadius: '8px',
-          fontSize: '0.95rem',
-          padding: '12px 20px'
-        }
-      });
+      // 성공 토스트는 서비스에서 자동 표시됨
     } catch (error) {
-      toast.error('강의 탈퇴 중 오류가 발생했습니다.', {
-        icon: ({theme, type}) => <ErrorIcon sx={{ color: '#fff', fontSize: '1.5rem', mr: 1 }}/>,
-        style: {
-          background: isDarkMode ? '#d32f2f' : '#f44336',
-          color: '#fff',
-          fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-          borderRadius: '8px',
-          fontSize: '0.95rem',
-          padding: '12px 20px'
-        }
-      });
+      // 에러 토스트는 서비스에서 자동 표시됨  
+      console.error('강의 탈퇴 중 오류:', error);
     }
   };
 

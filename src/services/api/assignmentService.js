@@ -1,4 +1,11 @@
-import apiClient from '../apiClient';
+import { 
+  apiGet, 
+  apiPost, 
+  apiPut, 
+  apiDelete, 
+  apiGetWithParams,
+  apiParallel 
+} from '../apiHelpers';
 
 /**
  * 과제 관련 API 서비스
@@ -13,7 +20,7 @@ const assignmentService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/assignments`, {
+    return apiGet(`/api/courses/${courseId}/assignments`, {
       customErrorMessage: '과제 목록을 불러올 수 없습니다.',
       ...options
     });
@@ -27,7 +34,7 @@ const assignmentService = {
       throw new Error('강의 ID와 과제 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/assignments/${assignmentId}`, {
+    return apiGet(`/api/courses/${courseId}/assignments/${assignmentId}`, {
       customErrorMessage: '과제 정보를 찾을 수 없습니다.',
       ...options
     });
@@ -57,9 +64,8 @@ const assignmentService = {
       throw new Error('마감일은 시작일보다 나중이어야 합니다.');
     }
 
-    return apiClient.post(`/api/courses/${courseId}/assignments`, assignmentData, {
+    return apiPost(`/api/courses/${courseId}/assignments`, assignmentData, {
       customErrorMessage: '과제 생성에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -82,9 +88,8 @@ const assignmentService = {
       }
     }
 
-    return apiClient.put(`/api/courses/${courseId}/assignments/${assignmentId}`, assignmentData, {
+    return apiPut(`/api/courses/${courseId}/assignments/${assignmentId}`, assignmentData, {
       customErrorMessage: '과제 수정에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -97,9 +102,8 @@ const assignmentService = {
       throw new Error('강의 ID와 과제 ID가 필요합니다.');
     }
 
-    return apiClient.delete(`/api/courses/${courseId}/assignments/${assignmentId}`, {
+    return apiDelete(`/api/courses/${courseId}/assignments/${assignmentId}`, {
       customErrorMessage: '과제 삭제에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -133,7 +137,7 @@ const assignmentService = {
       throw new Error('강의 ID와 상태가 필요합니다.');
     }
 
-    return apiClient.getWithParams(`/api/courses/${courseId}/assignments`, 
+    return apiGetWithParams(`/api/courses/${courseId}/assignments`, 
       { status }, 
       {
         customErrorMessage: '과제 목록을 불러올 수 없습니다.',
@@ -150,7 +154,7 @@ const assignmentService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.getWithParams(`/api/courses/${courseId}/assignments`, 
+    return apiGetWithParams(`/api/courses/${courseId}/assignments`, 
       { upcoming: days }, 
       {
         customErrorMessage: '마감 임박 과제를 불러올 수 없습니다.',
@@ -168,7 +172,7 @@ const assignmentService = {
       return [];
     }
 
-    return apiClient.getWithParams(`/api/courses/${courseId}/assignments`, 
+    return apiGetWithParams(`/api/courses/${courseId}/assignments`, 
       { search: query.trim() }, 
       {
         customErrorMessage: '과제 검색에 실패했습니다.',
@@ -193,7 +197,7 @@ const assignmentService = {
     }));
 
     try {
-      return await apiClient.parallel(requests);
+      return await apiParallel(requests);
     } catch (error) {
       console.warn('Some assignment requests failed:', error);
       return [];
@@ -208,7 +212,7 @@ const assignmentService = {
       throw new Error('강의 ID와 과제 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/assignments/${assignmentId}/stats`, {
+    return apiGet(`/api/courses/${courseId}/assignments/${assignmentId}/stats`, {
       customErrorMessage: '과제 통계를 불러올 수 없습니다.',
       showToast: false,
       ...options
@@ -223,7 +227,7 @@ const assignmentService = {
       throw new Error('강의 ID와 과제 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/assignments/${assignmentId}/submissions`, {
+    return apiGet(`/api/courses/${courseId}/assignments/${assignmentId}/submissions`, {
       customErrorMessage: '제출 현황을 불러올 수 없습니다.',
       ...options
     });
@@ -237,12 +241,11 @@ const assignmentService = {
       throw new Error('원본 강의 ID, 과제 ID, 대상 강의 ID가 필요합니다.');
     }
 
-    return apiClient.post(`/api/courses/${toCourseId}/assignments/copy`, {
+    return apiPost(`/api/courses/${toCourseId}/assignments/copy`, {
       fromCourseId,
       assignmentId
     }, {
       customErrorMessage: '과제 복사에 실패했습니다.',
-      showToast: true,
       ...options
     });
   }

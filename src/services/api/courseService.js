@@ -1,4 +1,11 @@
-import apiClient from '../apiClient';
+import { 
+  apiGet, 
+  apiPost, 
+  apiPut, 
+  apiDelete, 
+  apiGetWithParams,
+  apiParallel 
+} from '../apiHelpers';
 
 /**
  * 강의 관련 API 서비스
@@ -9,7 +16,7 @@ const courseService = {
    * 현재 사용자의 강의 목록 조회
    */
   getMyCourses: async (options = {}) => {
-    return apiClient.get('/api/users/me/courses', {
+    return apiGet('/api/users/me/courses', {
       customErrorMessage: '내 강의 목록을 불러올 수 없습니다.',
       ...options
     });
@@ -19,7 +26,7 @@ const courseService = {
    * 현재 사용자의 강의 상세 목록 조회 (과제 포함)
    */
   getMyCoursesDetails: async (options = {}) => {
-    return apiClient.get('/api/users/me/courses/details', {
+    return apiGet('/api/users/me/courses/details', {
       customErrorMessage: '강의 상세 정보를 불러올 수 없습니다.',
       ...options
     });
@@ -33,7 +40,7 @@ const courseService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/details`, {
+    return apiGet(`/api/courses/${courseId}/details`, {
       customErrorMessage: '강의 정보를 찾을 수 없습니다.',
       ...options
     });
@@ -47,7 +54,7 @@ const courseService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/users`, {
+    return apiGet(`/api/courses/${courseId}/users`, {
       customErrorMessage: '참여자 목록을 불러올 수 없습니다.',
       ...options
     });
@@ -61,7 +68,7 @@ const courseService = {
       throw new Error('강의 ID와 사용자 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/users/${userId}`, {
+    return apiGet(`/api/courses/${courseId}/users/${userId}`, {
       customErrorMessage: '사용자 정보를 찾을 수 없습니다.',
       ...options
     });
@@ -71,7 +78,7 @@ const courseService = {
    * 모든 강의 목록 조회 (관리자용)
    */
   getAllCourses: async (options = {}) => {
-    return apiClient.get('/api/courses', {
+    return apiGet('/api/courses', {
       customErrorMessage: '강의 목록을 불러올 수 없습니다.',
       ...options
     });
@@ -93,9 +100,8 @@ const courseService = {
       throw new Error(`필수 필드가 누락되었습니다: ${missingFields.join(', ')}`);
     }
 
-    return apiClient.post('/api/courses', courseData, {
+    return apiPost('/api/courses', courseData, {
       customErrorMessage: '강의 생성에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -108,9 +114,8 @@ const courseService = {
       throw new Error('강의 ID와 수정할 데이터가 필요합니다.');
     }
 
-    return apiClient.put(`/api/courses/${courseId}`, courseData, {
+    return apiPut(`/api/courses/${courseId}`, courseData, {
       customErrorMessage: '강의 정보 수정에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -123,9 +128,8 @@ const courseService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.delete(`/api/courses/${courseId}`, {
+    return apiDelete(`/api/courses/${courseId}`, {
       customErrorMessage: '강의 삭제에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -138,9 +142,8 @@ const courseService = {
       throw new Error('참가 코드가 필요합니다.');
     }
 
-    return apiClient.post('/api/users/me/courses', joinData, {
+    return apiPost('/api/users/me/courses', joinData, {
       customErrorMessage: '강의 참가에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -153,9 +156,8 @@ const courseService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.delete(`/api/users/me/courses/${courseId}`, {
+    return apiDelete(`/api/users/me/courses/${courseId}`, {
       customErrorMessage: '강의 탈퇴에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -190,7 +192,7 @@ const courseService = {
       return [];
     }
 
-    return apiClient.getWithParams('/api/courses', 
+    return apiGetWithParams('/api/courses', 
       { search: query.trim() }, 
       {
         customErrorMessage: '강의 검색에 실패했습니다.',
@@ -208,7 +210,7 @@ const courseService = {
       throw new Error('상태가 필요합니다.');
     }
 
-    return apiClient.getWithParams('/api/courses', 
+    return apiGetWithParams('/api/courses', 
       { status }, 
       {
         customErrorMessage: '강의 목록을 불러올 수 없습니다.',
@@ -240,7 +242,7 @@ const courseService = {
     ];
 
     try {
-      const [courseDetails, courseUsers] = await apiClient.parallel(requests);
+      const [courseDetails, courseUsers] = await apiParallel(requests);
       
       return {
         course: courseDetails,
@@ -266,7 +268,7 @@ const courseService = {
     }));
 
     try {
-      return await apiClient.parallel(requests);
+      return await apiParallel(requests);
     } catch (error) {
       console.warn('Some course requests failed:', error);
       return [];
@@ -281,7 +283,7 @@ const courseService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.get(`/api/courses/${courseId}/stats`, {
+    return apiGet(`/api/courses/${courseId}/stats`, {
       customErrorMessage: '강의 통계를 불러올 수 없습니다.',
       showToast: false,
       ...options

@@ -1,4 +1,12 @@
-import apiClient from '../apiClient';
+import { 
+  apiGet, 
+  apiPost, 
+  apiPut, 
+  apiDelete, 
+  apiGetWithParams,
+  apiGetSilent,
+  apiParallel 
+} from '../apiHelpers';
 
 /**
  * 사용자 관련 API 서비스
@@ -9,7 +17,7 @@ const userService = {
    * 현재 로그인한 사용자 정보 조회
    */
   getCurrentUser: async (options = {}) => {
-    return apiClient.get('/api/users/me', {
+    return apiGet('/api/users/me', {
       customErrorMessage: '사용자 정보를 불러올 수 없습니다.',
       ...options
     });
@@ -23,7 +31,7 @@ const userService = {
       throw new Error('사용자 ID가 필요합니다.');
     }
     
-    return apiClient.get(`/api/users/${userId}`, {
+    return apiGet(`/api/users/${userId}`, {
       customErrorMessage: '사용자 정보를 찾을 수 없습니다.',
       ...options
     });
@@ -37,9 +45,8 @@ const userService = {
       throw new Error('유효한 프로필 데이터가 필요합니다.');
     }
 
-    return apiClient.put('/api/users/me', profileData, {
+    return apiPut('/api/users/me', profileData, {
       customErrorMessage: '프로필 업데이트에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -57,9 +64,8 @@ const userService = {
       payload.courseId = courseId;
     }
 
-    return apiClient.put(`/api/users/${userId}/role`, payload, {
+    return apiPut(`/api/users/${userId}/role`, payload, {
       customErrorMessage: '권한 변경에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -68,7 +74,7 @@ const userService = {
    * 모든 사용자 목록 조회 (관리자용)
    */
   getAllUsers: async (options = {}) => {
-    return apiClient.get('/api/users', {
+    return apiGet('/api/users', {
       customErrorMessage: '사용자 목록을 불러올 수 없습니다.',
       ...options
     });
@@ -82,9 +88,8 @@ const userService = {
       throw new Error('사용자 ID와 수정할 데이터가 필요합니다.');
     }
 
-    return apiClient.put(`/api/users/${userId}`, userData, {
+    return apiPut(`/api/users/${userId}`, userData, {
       customErrorMessage: '사용자 정보 수정에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -97,9 +102,8 @@ const userService = {
       throw new Error('사용자 ID가 필요합니다.');
     }
 
-    return apiClient.delete(`/api/users/${userId}`, {
+    return apiDelete(`/api/users/${userId}`, {
       customErrorMessage: '사용자 삭제에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -112,9 +116,8 @@ const userService = {
       throw new Error('사용자 ID와 강의 ID가 필요합니다.');
     }
 
-    return apiClient.delete(`/api/users/${userId}/courses/${courseId}`, {
+    return apiDelete(`/api/users/${userId}/courses/${courseId}`, {
       customErrorMessage: '사용자 탈퇴 처리에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -127,9 +130,8 @@ const userService = {
       throw new Error('강의 ID가 필요합니다.');
     }
 
-    return apiClient.delete(`/api/users/me/courses/${courseId}`, {
+    return apiDelete(`/api/users/me/courses/${courseId}`, {
       customErrorMessage: '강의 탈퇴에 실패했습니다.',
-      showToast: true,
       ...options
     });
   },
@@ -142,11 +144,11 @@ const userService = {
       return [];
     }
 
-    return apiClient.getWithParams('/api/users', 
+    return apiGetWithParams('/api/users', 
       { search: query.trim() }, 
       {
         customErrorMessage: '사용자 검색에 실패했습니다.',
-        showToast: false, // 검색은 조용히 실패
+        showToast: false, // 검색은 조용히
         ...options
       }
     );
@@ -160,7 +162,7 @@ const userService = {
       throw new Error('역할이 필요합니다.');
     }
 
-    return apiClient.getWithParams('/api/users', 
+    return apiGetWithParams('/api/users', 
       { role }, 
       {
         customErrorMessage: '사용자 목록을 불러올 수 없습니다.',
@@ -185,7 +187,7 @@ const userService = {
     }));
 
     try {
-      return await apiClient.parallel(requests);
+      return await apiParallel(requests);
     } catch (error) {
       console.warn('Some user requests failed:', error);
       // 실패한 요청이 있어도 성공한 것들은 반환

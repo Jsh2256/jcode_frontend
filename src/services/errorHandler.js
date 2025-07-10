@@ -18,12 +18,19 @@ export const ERROR_TYPES = {
 // 기본 에러 메시지
 const DEFAULT_MESSAGES = {
   [ERROR_TYPES.NETWORK]: '네트워크 연결을 확인해주세요.',
-  [ERROR_TYPES.UNAUTHORIZED]: '로그인이 필요합니다.',
+  [ERROR_TYPES.UNAUTHORIZED]: '세션이 만료되었습니다. 다시 로그인해주세요.',
   [ERROR_TYPES.FORBIDDEN]: '접근 권한이 없습니다.',
   [ERROR_TYPES.NOT_FOUND]: '요청한 리소스를 찾을 수 없습니다.',
   [ERROR_TYPES.VALIDATION]: '입력 정보를 확인해주세요.',
   [ERROR_TYPES.SERVER]: '서버에 오류가 발생했습니다.',
   [ERROR_TYPES.UNKNOWN]: '알 수 없는 오류가 발생했습니다.'
+};
+
+// 특별한 처리가 필요한 에러 메시지들
+const SPECIAL_ERROR_MESSAGES = {
+  'No token available': '세션이 만료되어 로그아웃됩니다.',
+  'JWT토큰이 만료되었습니다': '세션이 만료되었습니다. 다시 로그인해주세요.',
+  '토큰이 응답 헤더에 없습니다': '인증에 문제가 발생했습니다. 다시 로그인해주세요.'
 };
 
 /**
@@ -55,6 +62,12 @@ export const getErrorType = (status) => {
  * 에러 객체에서 사용자에게 보여줄 메시지 추출
  */
 export const getErrorMessage = (error, fallbackMessage = null) => {
+  // 특별한 에러 메시지 확인 (토큰 관련 등)
+  const errorMessage = error?.message;
+  if (errorMessage && SPECIAL_ERROR_MESSAGES[errorMessage]) {
+    return SPECIAL_ERROR_MESSAGES[errorMessage];
+  }
+  
   // 서버에서 제공한 메시지가 있으면 우선 사용
   if (error?.response?.data?.message) {
     return error.response.data.message;
@@ -77,8 +90,8 @@ export const showErrorToast = (error, customMessage = null) => {
   
   // 에러 타입별 토스트 스타일
   const toastOptions = {
-    position: 'top-right',
-    autoClose: 5000,
+    position: 'top-center',
+    autoClose: 3000,
     hideProgressBar: false,
     closeOnClick: true,
     pauseOnHover: true,
@@ -87,10 +100,8 @@ export const showErrorToast = (error, customMessage = null) => {
 
   switch (errorType) {
     case ERROR_TYPES.UNAUTHORIZED:
-      toast.error(message, {
-        ...toastOptions,
-        autoClose: 3000,
-      });
+      // 401 에러는 리다이렉트가 일어나므로 토스트 표시하지 않음
+      // 필요시 컴포넌트 레벨에서 명시적으로 표시
       break;
     case ERROR_TYPES.VALIDATION:
       toast.warning(message, toastOptions);

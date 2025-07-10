@@ -1,9 +1,16 @@
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
-import { toast } from 'react-toastify';
 
-// 새로운 API 서비스 import
-import { userService, authService } from '../services/api';
+// 토큰 유틸리티 import
+import { 
+  isTokenExpiringSoon, 
+  refreshTokenRequest, 
+  getCurrentToken,
+  saveToken,
+  removeToken 
+} from '../utils/tokenUtils';
+
+// 새로운 API 서비스 import (순환 참조 방지를 위해 필요시에만)
+import { userService } from '../services/api';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
@@ -13,38 +20,14 @@ const api = axios.create({
   withCredentials: true
 });
 
-// 토큰 만료 체크 (5분 전)
-const isTokenExpiringSoon = (token) => {
+// 토큰 갱신 함수 (에러 처리 minimal - 토스트는 errorHandler에서 처리)
+const refreshToken = async () => {
   try {
-    const decoded = jwtDecode(token);
-    const expirationTime = decoded.exp * 1000;
-    const currentTime = Date.now();
-    const timeUntilExpiry = expirationTime - currentTime;
-    return timeUntilExpiry < 5 * 60 * 1000;
+    return await refreshTokenRequest();
   } catch (error) {
-    return true;
-  }
-};
-
-// 토큰 갱신 함수
-const refreshToken = async (currentToken) => {
-  try {
-    const response = await axios.create({
-      baseURL: process.env.REACT_APP_API_URL,
-      withCredentials: true
-    }).post('/api/auth/refresh', null);
-
-    const authHeader = response.headers['authorization'];
-    if (authHeader?.startsWith('Bearer ')) {
-      const newToken = authHeader.substring(7);
-      sessionStorage.setItem('jwt', newToken);
-      return newToken;
-    }
-  } catch (error) {
-    toast.error('세션이 만료되어 로그아웃됩니다.', {
-      autoClose: 2000,
-      onClose: () => auth.logout()
-    });
+    // 토큰 갱신 실패 시 즉시 로그아웃 (토스트는 errorHandler에서)
+    removeToken();
+    window.location.href = '/login';
     throw error;
   }
 };
@@ -55,19 +38,19 @@ api.interceptors.request.use(async (config) => {
     return config;
   }
 
-  const token = sessionStorage.getItem('jwt');
+  const token = getCurrentToken();
   
   // 토큰이 있고 곧 만료될 예정이면 미리 갱신
   if (token && isTokenExpiringSoon(token)) {
     try {
-      await refreshToken(token);
+      await refreshToken();
     } catch (error) {
       // 에러 처리는 refreshToken 함수 내에서 수행
     }
   }
 
   // 최신 토큰으로 요청
-  const currentToken = sessionStorage.getItem('jwt');
+  const currentToken = getCurrentToken();
   if (currentToken) {
     config.headers.Authorization = `Bearer ${currentToken}`;
   }
@@ -83,7 +66,7 @@ api.interceptors.response.use(
     const authHeader = response.headers['authorization'];
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      sessionStorage.setItem('jwt', token);
+      saveToken(token);
     }
     return response;
   },
@@ -92,16 +75,15 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const currentToken = sessionStorage.getItem('jwt');
+        const currentToken = getCurrentToken();
         if (!currentToken) {
-          toast.error('세션이 만료되어 로그아웃됩니다.', {
-            autoClose: 2000,
-            onClose: () => auth.logout()
-          });
+          // 토큰이 없으면 즉시 로그아웃 (토스트는 errorHandler에서)
+          removeToken();
+          window.location.href = '/login';
           throw new Error('No token available');
         }
         
-        const newToken = await refreshToken(currentToken);
+        const newToken = await refreshToken();
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       } catch (refreshError) {
@@ -128,11 +110,11 @@ export const auth = {
       }
 
       const token = authHeader.substring(7);
-      sessionStorage.setItem('jwt', token);
+      saveToken(token);
 
       return token;
     } catch (error) {
-      toast.error('토큰 요청에 실패했습니다.');
+      // 에러 메시지는 errorHandler에서 처리
       throw error;
     }
   },
@@ -141,10 +123,13 @@ export const auth = {
 
   logout: async () => {
     try {
-      await authService.logout();
+      // 순환 참조 방지를 위해 직접 구현
+      await api.post('/logout', null);
+      removeToken();
+      window.location.href = '/login';
     } catch (error) {
-      // 에러 처리는 서비스 내에서 처리됨
-      sessionStorage.removeItem('jwt');
+      // 로그아웃 실패해도 토큰 제거하고 로그인 페이지로
+      removeToken();
       window.location.href = '/login';
     }
   },
