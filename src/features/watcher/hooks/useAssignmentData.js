@@ -1,194 +1,138 @@
-import { useState, useEffect, useCallback } from 'react';
-import api from '../../../api/axios';
-import { useAuth } from '../../../contexts/AuthContext';
-import { 
-  fetchAssignmentInfo,
-  fetchCourseInfo,
-  fetchStudents,
-  fetchChartDataByTimeRange,
-  fetchUserCoursesDetails
-} from '../components/charts/api';
+import { useState, useEffect } from 'react';
+import { fetchAssignmentInfo } from '../components/charts/api';
 
-/**
- * 과제 데이터 관리 커스텀 훅
- * @param {string} courseId - 강의 ID
- * @param {string} assignmentId - 과제 ID
- */
 export const useAssignmentData = (courseId, assignmentId) => {
-  const { user } = useAuth();
-  const [data, setData] = useState({
-    course: null,
-    assignment: null,
-    students: [],
-    chartData: [],
-    submissions: []
-  });
+  const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [studentCount, setStudentCount] = useState(0);
+  const [error, setError] = useState(null);
 
-  // 과제 상세 정보 로드
-  const loadAssignmentData = useCallback(async () => {
+  const loadAssignmentData = async () => {
+    if (!courseId || !assignmentId) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      setError('');
-
-      let courseData = null;
-      let assignmentData = null;
-      let studentsData = [];
-
-      if (user?.role === 'ADMIN') {
-        // 관리자 권한으로 데이터 로드
-        try {
-          courseData = await fetchCourseInfo(courseId);
-        } catch (courseError) {
-          console.error('강의 정보 로드 실패:', courseError);
+      setError(null);
+      
+      const assignmentData = await fetchAssignmentInfo(courseId, assignmentId);
+      
+      // assignmentData가 배열인지 확인
+      if (Array.isArray(assignmentData)) {
+        const currentAssignment = assignmentData.find(a => a.assignmentId === parseInt(assignmentId));
+        if (!currentAssignment) {
+          throw new Error('과제를 찾을 수 없습니다.');
         }
-
-        try {
-          const assignmentResponse = await fetchAssignmentInfo(courseId, assignmentId);
-          if (Array.isArray(assignmentResponse)) {
-            assignmentData = assignmentResponse.find(a => a.assignmentId === parseInt(assignmentId));
-          } else {
-            assignmentData = assignmentResponse;
-          }
-        } catch (assignmentError) {
-          console.error('과제 정보 로드 실패:', assignmentError);
-        }
-
-        try {
-          studentsData = await fetchStudents(courseId);
-        } catch (studentsError) {
-          console.error('학생 목록 로드 실패:', studentsError);
-        }
-
-      } else if (user?.role === 'PROFESSOR' || user?.role === 'ASSISTANT') {
-        // 교수/조교 권한으로 데이터 로드
-        const userCoursesData = await fetchUserCoursesDetails();
-        courseData = userCoursesData.find(c => c.courseId === parseInt(courseId));
-
-        if (!courseData) {
-          throw new Error('강의를 찾을 수 없습니다.');
-        }
-
-        const assignmentResponse = await fetchAssignmentInfo(courseId, assignmentId);
-        if (Array.isArray(assignmentResponse)) {
-          assignmentData = assignmentResponse.find(a => a.assignmentId === parseInt(assignmentId));
-        } else {
-          assignmentData = assignmentResponse;
-        }
-
-        studentsData = await fetchStudents(courseId);
+        setAssignment(currentAssignment);
       } else {
-        // 학생 권한으로 데이터 로드
-        const userCoursesData = await fetchUserCoursesDetails();
-        courseData = userCoursesData.find(c => c.courseId === parseInt(courseId));
-
-        if (!courseData) {
-          throw new Error('강의를 찾을 수 없습니다.');
-        }
-
-        const assignmentResponse = await fetchAssignmentInfo(courseId, assignmentId);
-        if (Array.isArray(assignmentResponse)) {
-          assignmentData = assignmentResponse.find(a => a.assignmentId === parseInt(assignmentId));
-        } else {
-          assignmentData = assignmentResponse;
-        }
+        // assignmentData가 배열이 아닌 경우 직접 사용
+        setAssignment(assignmentData);
       }
-
-      setData({
-        course: courseData,
-        assignment: assignmentData,
-        students: studentsData || [],
-        chartData: [],
-        submissions: studentsData || []
-      });
-
-      setStudentCount(studentsData?.length || 0);
-
-    } catch (error) {
-      setError(error.message || '데이터를 불러오는데 실패했습니다.');
-      console.error('과제 데이터 로드 실패:', error);
+    } catch (err) {
+      console.error('과제 정보 로드 실패:', err);
+      setError(err.message || '과제 정보를 불러오는데 실패했습니다.');
+      setAssignment(null);
     } finally {
       setLoading(false);
     }
-  }, [courseId, assignmentId, user]);
+  };
 
-  // 차트 데이터 로드
-  const loadChartData = useCallback(async (startDate, endDate) => {
-    try {
-      if (!courseId || !assignmentId) return;
+  // 과제 정보 새로고침
+  const refreshAssignment = () => {
+    loadAssignmentData();
+  };
 
-      const chartData = await fetchChartDataByTimeRange(
-        courseId, 
-        assignmentId, 
-        startDate, 
-        endDate
-      );
+  // 과제 날짜 관련 유틸리티 함수들
+  const getStartDate = () => {
+    if (!assignment) return null;
+    
+    // 속성 우선순위: startDate -> kickoffDate -> startDateTime
+    if (assignment.startDate) return assignment.startDate;
+    if (assignment.kickoffDate) return assignment.kickoffDate;
+    if (assignment.startDateTime) return assignment.startDateTime;
+    return null;
+  };
 
-      setData(prev => ({
-        ...prev,
-        chartData: chartData || []
-      }));
+  const getEndDate = () => {
+    if (!assignment) return null;
+    
+    // 속성 우선순위: endDate -> deadlineDate -> endDateTime
+    if (assignment.endDate) return assignment.endDate;
+    if (assignment.deadlineDate) return assignment.deadlineDate;
+    if (assignment.endDateTime) return assignment.endDateTime;
+    return null;
+  };
 
-    } catch (error) {
-      console.error('차트 데이터 로드 실패:', error);
-      setError('차트 데이터를 불러오는데 실패했습니다.');
-    }
-  }, [courseId, assignmentId]);
+  const getAssignmentName = () => {
+    if (!assignment) return '로딩중...';
+    return assignment.assignmentName || assignment.name || '과제명 없음';
+  };
 
-  // 과제 생성
-  const createAssignment = useCallback(async (assignmentData) => {
-    try {
-      await api.post(`/api/courses/${courseId}/assignments`, assignmentData);
-      await loadAssignmentData(); // 데이터 새로고침
-      return { success: true };
-    } catch (error) {
-      console.error('과제 생성 실패:', error);
-      return { success: false, error: error.message };
-    }
-  }, [courseId, loadAssignmentData]);
+  // 과제 상태 확인
+  const isAssignmentActive = () => {
+    const startDate = getStartDate();
+    const endDate = getEndDate();
+    const now = new Date();
 
-  // 과제 수정
-  const updateAssignment = useCallback(async (updatedData) => {
-    try {
-      await api.put(`/api/courses/${courseId}/assignments/${assignmentId}`, updatedData);
-      await loadAssignmentData(); // 데이터 새로고침
-      return { success: true };
-    } catch (error) {
-      console.error('과제 수정 실패:', error);
-      return { success: false, error: error.message };
-    }
-  }, [courseId, assignmentId, loadAssignmentData]);
+    if (!startDate || !endDate) return false;
 
-  // 과제 삭제
-  const deleteAssignment = useCallback(async () => {
-    try {
-      await api.delete(`/api/courses/${courseId}/assignments/${assignmentId}`);
-      return { success: true };
-    } catch (error) {
-      console.error('과제 삭제 실패:', error);
-      return { success: false, error: error.message };
-    }
-  }, [courseId, assignmentId]);
+    return new Date(startDate) <= now && now <= new Date(endDate);
+  };
 
-  // 초기 데이터 로드
+  const isAssignmentExpired = () => {
+    const endDate = getEndDate();
+    if (!endDate) return false;
+    
+    return new Date() > new Date(endDate);
+  };
+
+  const isAssignmentUpcoming = () => {
+    const startDate = getStartDate();
+    if (!startDate) return false;
+    
+    return new Date() < new Date(startDate);
+  };
+
+  // 남은 시간 계산
+  const getRemainingTime = () => {
+    const endDate = getEndDate();
+    if (!endDate) return null;
+
+    const now = new Date();
+    const deadline = new Date(endDate);
+    const timeDiff = deadline - now;
+
+    if (timeDiff <= 0) return { expired: true };
+
+    const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+    return { days, hours, minutes, expired: false };
+  };
+
   useEffect(() => {
-    if (courseId && assignmentId) {
-      loadAssignmentData();
-    }
-  }, [loadAssignmentData]);
+    loadAssignmentData();
+  }, [courseId, assignmentId]);
 
   return {
-    data,
+    // 상태
+    assignment,
     loading,
     error,
-    studentCount,
-    loadChartData,
-    createAssignment,
-    updateAssignment,
-    deleteAssignment,
-    refreshData: loadAssignmentData,
-    user
+    
+    // 계산된 값
+    assignmentName: getAssignmentName(),
+    startDate: getStartDate(),
+    endDate: getEndDate(),
+    isActive: isAssignmentActive(),
+    isExpired: isAssignmentExpired(),
+    isUpcoming: isAssignmentUpcoming(),
+    remainingTime: getRemainingTime(),
+    
+    // 액션
+    refreshAssignment,
+    loadAssignmentData
   };
 }; 
