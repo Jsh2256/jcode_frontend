@@ -1,4 +1,4 @@
-import api from '../../../api/axios';
+import api from '../../../../api/axios';
 import { fetchMonitoringData as fetchMonitoringDataService } from './ChartDataService';
 
 // 모니터링 데이터 가져오기

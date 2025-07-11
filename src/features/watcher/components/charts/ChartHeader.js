@@ -6,7 +6,7 @@ import {
   Chip, 
   Divider 
 } from '@mui/material';
-import RemainingTime from '../RemainingTime';
+import RemainingTime from '../common/RemainingTime';
 
 const ChartHeader = ({ student, assignment, course }) => {
   // 데이터가 로딩되었는지 확인

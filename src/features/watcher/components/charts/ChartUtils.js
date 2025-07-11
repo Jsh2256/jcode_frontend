@@ -1,5 +1,5 @@
 // 차트 스타일 및 유틸리티 함수
-import { CHART_FONT_FAMILY } from '../../../constants/chartConfig';
+import { CHART_FONT_FAMILY } from '../../../../constants/chartConfig';
 
 // 다크모드에 따른 공통 스타일 설정
 export const getChartStyles = (isDarkMode) => {

@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Paper, Typography, Box, useTheme } from '@mui/material';
 import StudentSelector from './StudentSelector';
 import { cleanupChartInstance } from './api';
-import { useAuth } from '../../../contexts/AuthContext';
-import api from '../../../api/axios';
-import { formatBytes } from '../../../utils/formatters';
-import { sortByName, sortByStudentNum, sortByChanges } from '../../../utils/sortHelpers';
+import { useAuth } from '../../../../contexts/AuthContext';
+import api from '../../../../api/axios';
+import { formatBytes } from '../../../../utils/formatters';
+import { sortByName, sortByStudentNum, sortByChanges } from '../../../../utils/sortHelpers';
 import { getChartStyles } from './ChartUtils';
 
 const StudentChart = ({ data, searchQuery, userRole, onStudentClick }) => {

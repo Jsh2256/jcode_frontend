@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Box, Paper, useTheme } from '@mui/material';
-import { PlotlyChart } from '../../ui';
+import { PlotlyChart } from '../../../../components/ui';
 import { 
   getHoverTemplate, 
   createLogTraces, 

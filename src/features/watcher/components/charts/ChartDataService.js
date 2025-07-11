@@ -1,5 +1,5 @@
-import api from '../../../api/axios';
-import CacheManager from '../../../utils/cache-manager';
+import api from '../../../../api/axios';
+import CacheManager from '../../../../utils/cache-manager';
 
 // 시간 간격 계산 함수
 export const calculateIntervalValue = (timeUnit, minuteValue) => {

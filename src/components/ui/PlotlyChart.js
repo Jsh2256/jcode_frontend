@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getChartStyles, getTimeFormatStops, getHoverTemplate, getImageSaveOptions } from '../watcher/charts/ChartUtils';
+import { getChartStyles, getTimeFormatStops, getHoverTemplate, getImageSaveOptions } from '../../features/watcher/components/charts/ChartUtils';
 import LoadingSpinner from './LoadingSpinner';
 
 // Plotly 동적 로딩을 위한 캐시
