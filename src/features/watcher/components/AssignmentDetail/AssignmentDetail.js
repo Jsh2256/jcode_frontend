@@ -5,40 +5,18 @@ import {
   Paper,
   Typography,
   Box,
-  CircularProgress,
-  TextField,
-  InputAdornment,
-  Button,
-  Tabs,
-  Tab,
   Fade,
-  useTheme,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Stack,
-  IconButton
+  useTheme
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import MonitorIcon from '@mui/icons-material/Monitor';
-import PeopleIcon from '@mui/icons-material/People';
-import SortIcon from '@mui/icons-material/Sort';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
-import NumbersIcon from '@mui/icons-material/Numbers';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import CodeIcon from '@mui/icons-material/Code';
-import { toast } from 'react-toastify';
 import ErrorIcon from '@mui/icons-material/Error';
-import WatcherBreadcrumbs from '../../../../components/common/WatcherBreadcrumbs';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../../../contexts/AuthContext';
-import StudentChart from '../charts/StudentChart';
-import DateRangeSelector from '../charts/DateRangeSelector';
+import AssignmentHeader from './AssignmentHeader';
+import AssignmentTabs from './AssignmentTabs';
+import StatisticsTab from './StatisticsTab';
+import AssignmentStudentsTab from './AssignmentStudentsTab';
+import TabPanel from './TabPanel';
 import StudentSelector from '../charts/StudentSelector';
-import ChartHeader from '../charts/ChartHeader';
 import api from '../../../../api/axios';
 import { 
   fetchAssignmentInfo, 
@@ -52,28 +30,7 @@ import {
 import { sortByName, sortByStudentNum, sortByChanges, createStringSort } from '../../../../utils/sortHelpers';
 import { LoadingSpinner } from '../../../../components/ui';
 
-// TabPanel 컴포넌트
-function TabPanel(props) {
-  const { children, value, index, ...other } = props;
 
-  return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
-      {...other}
-    >
-      {value === index && (
-        <Fade in={value === index} timeout={300}>
-          <Box sx={{ p: 3 }}>
-            {children}
-          </Box>
-        </Fade>
-      )}
-    </div>
-  );
-}
 
 const AssignmentDetail = () => {
   const { courseId, assignmentId } = useParams();
@@ -407,7 +364,7 @@ const AssignmentDetail = () => {
         setTimeout(() => {
           try {
             //console.log('[나의 통계] 사전 데이터 로딩 시작');
-            // const startTime = performance.now();
+            const prefetchStartTime = performance.now();
             const intervalValue = 5; // 기본 간격값 (5분)
             
             // 사용자 모니터링 데이터 미리 가져오기
@@ -417,7 +374,7 @@ const AssignmentDetail = () => {
                 const cacheEndTime = performance.now();
                 //console.log(`[나의 통계] 모니터링 데이터 사전 로딩 완료: ${cacheEndTime - cacheStartTime}ms 소요`);
               })
-              // .catch(err => console.error('[나의 통계] 모니터링 데이터 미리 로드 실패:', err));
+              .catch(err => console.error('[나의 통계] 모니터링 데이터 미리 로드 실패:', err));
             
             // 기본 과제 정보 미리 가져오기
             const assignmentStartTime = performance.now();
@@ -425,21 +382,21 @@ const AssignmentDetail = () => {
               .then(() => {
                 const assignmentEndTime = performance.now();
                 //console.log(`[나의 통계] 과제 정보 사전 로딩 완료: ${assignmentEndTime - assignmentStartTime}ms 소요`);
-                //console.log(`[성능] 사전 로딩 전체 완료: ${performance.now() - startTime}ms 소요`);
+                //console.log(`[성능] 사전 로딩 전체 완료: ${performance.now() - prefetchStartTime}ms 소요`);
               })
-              // .catch(err => console.error('[나의 통계] 과제 정보 미리 로드 실패:', err));
+              .catch(err => console.error('[나의 통계] 과제 정보 미리 로드 실패:', err));
           } catch (err) {
             //console.error('[나의 통계] 사전 데이터 로드 오류:', err);
           }
         }, 0);
         
         //console.log('[나의 통계] 페이지 이동 시작');
-        //const navigateStartTime = performance.now();
+        const navigateStartTime = performance.now();
         
         // 학생의 통계 페이지로 이동
         navigate(`/watcher/class/${courseId}/assignment/${assignmentId}/monitoring/${userId}`);
         
-        //const endTime = performance.now();
+        const endTime = performance.now();
         //console.log(`[성능] 나의 통계 탭 처리 완료: ${endTime - startTime}ms`);
         //console.log('[성능 요약-탭 전환]', {
         //  '전체 처리 시간': endTime - startTime,
@@ -695,309 +652,53 @@ const AssignmentDetail = () => {
             `1px solid ${theme.palette.mode === 'dark' ? '#44475A' : '#E0E0E0'}`,
           borderRadius: '16px'
         }}>
-          <WatcherBreadcrumbs 
-            paths={[
-              { 
-                text: course?.courseName || '로딩중...', 
-                to: `/watcher/class/${course?.courseId}` 
-              },
-              { 
-                text: assignment?.assignmentName || '로딩중...', 
-                to: `/watcher/class/${course?.courseId}/assignment/${assignmentId}` 
-              }
-            ]} 
-          />
-
-          <ChartHeader
-            student={null}
-            assignment={assignment}
+          <AssignmentHeader 
             course={course}
+            assignment={assignment}
+            assignmentId={assignmentId}
           />
 
           <Box sx={{ width: '100%' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Tabs 
-                value={tabValue} 
-                onChange={handleTabChange}
-                sx={{
-                  '& .MuiTab-root': {
-                    fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                    textTransform: 'none',
-                    minHeight: '48px'
-                  }
-                }}
-              >
-                <Tab 
-                  icon={<BarChartIcon />} 
-                  iconPosition="start" 
-                  label="전체 통계" 
-                />
-                {user?.role === 'STUDENT' && (
-                  <Tab 
-                    icon={<MonitorIcon />} 
-                    iconPosition="start" 
-                    label="나의 통계" 
-                  />
-                )}
-                {(user?.role === 'ADMIN' || user?.role === 'PROFESSOR' || user?.role === 'ASSISTANT') && (
-                  <Tab 
-                    icon={<PeopleIcon />} 
-                    iconPosition="start" 
-                    label={`학생 목록 (${studentCount})`} 
-                  />
-                )}
-              </Tabs>
-            </Box>
+            <AssignmentTabs 
+              tabValue={tabValue}
+              onTabChange={handleTabChange}
+              userRole={user?.role}
+              studentCount={studentCount}
+            />
             
             <TabPanel value={tabValue} index={0}>
-              <Box sx={{ p: 2 }}>
-                {/* 검색 필드 - 학생이 아닌 경우에만 표시 */}
-                {user?.role !== 'STUDENT' && (
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="이름 또는 학번으로 검색"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    sx={{ 
-                      mb: 3,
-                      '& .MuiInputBase-root': {
-                        borderRadius: '20px',
-                        fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                        fontSize: '0.875rem'
-                      }
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon fontSize="small" />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                )}
-                
-                {/* 정렬 버튼 */}
-                <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: 1 }}>
-                  <Button
-                    size="small"
-                    variant="text"
-                    color="primary"
-                    onClick={handleSortByName}
-                    startIcon={<SortIcon sx={{ fontSize: '1rem' }} />}
-                    sx={{ 
-                      fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                      textTransform: 'none',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      px: 1.5
-                    }}
-                  >
-                    이름순
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="text"
-                    color="primary"
-                    onClick={handleSortByChanges}
-                    startIcon={<BarChartIcon sx={{ fontSize: '1rem' }} />}
-                    sx={{ 
-                      fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                      textTransform: 'none',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      px: 1.5
-                    }}
-                  >
-                    변화량순
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="text"
-                    color="primary"
-                    onClick={handleSortByStudentNum}
-                    startIcon={<NumbersIcon sx={{ fontSize: '1rem' }} />}
-                    sx={{ 
-                      fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                      textTransform: 'none',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      fontWeight: 500,
-                      px: 1.5
-                    }}
-                  >
-                    학번순
-                  </Button>
-                </Box>
-                
-                {/* 학생 차트 */}
-                <StudentChart 
-                  data={chartData}
-                  searchQuery={searchQuery}
-                  userRole={user?.role}
-                  onStudentClick={handleStudentChartClick}
-                />
-                
-                {/* 날짜 범위 선택기 */}
-                <DateRangeSelector 
-                  startDate={startDate}
-                  endDate={endDate}
-                  rangeStartDate={rangeStartDate}
-                  rangeEndDate={rangeEndDate}
-                  currentRange={currentRange}
-                  onRangeChange={handleRangeChange}
-                  onStartDateChange={handleStartDateChange}
-                  onEndDateChange={handleEndDateChange}
-                  onFetchData={fetchChartData}
-                />
-              </Box>
+              <StatisticsTab 
+                userRole={user?.role}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                chartData={chartData}
+                onStudentClick={handleStudentChartClick}
+                startDate={startDate}
+                endDate={endDate}
+                rangeStartDate={rangeStartDate}
+                rangeEndDate={rangeEndDate}
+                currentRange={currentRange}
+                onRangeChange={handleRangeChange}
+                onStartDateChange={handleStartDateChange}
+                onEndDateChange={handleEndDateChange}
+                onFetchData={fetchChartData}
+                onSortByName={handleSortByName}
+                onSortByChanges={handleSortByChanges}
+                onSortByStudentNum={handleSortByStudentNum}
+              />
             </TabPanel>
             
             {(user?.role === 'ADMIN' || user?.role === 'PROFESSOR' || user?.role === 'ASSISTANT') && (
               <TabPanel value={tabValue} index={1}>
-                <Box sx={{ mb: 3 }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="이메일, 이름, 학번으로 검색"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    sx={{ 
-                      mt: 2,
-                      '& .MuiInputBase-root': {
-                        fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif"
-                      }
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Box>
-                
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ width: '50px', fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
-                          No.
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
-                          학번
-                          <IconButton size="small" onClick={() => toggleSort('studentNum')} sx={{ ml: 1 }}>
-                            <Box sx={{ 
-                              transform: sort.field !== 'studentNum' ? 'rotate(0deg)' : (sort.order === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)'),
-                              transition: 'transform 0.2s ease-in-out',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}>
-                              <KeyboardArrowDownIcon fontSize="small" />
-                            </Box>
-                          </IconButton>
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
-                          이름
-                          <IconButton size="small" onClick={() => toggleSort('name')} sx={{ ml: 1 }}>
-                            <Box sx={{ 
-                              transform: sort.field !== 'name' ? 'rotate(0deg)' : (sort.order === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)'),
-                              transition: 'transform 0.2s ease-in-out',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}>
-                              <KeyboardArrowDownIcon fontSize="small" />
-                            </Box>
-                          </IconButton>
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
-                          이메일
-                          <IconButton size="small" onClick={() => toggleSort('email')} sx={{ ml: 1 }}>
-                            <Box sx={{ 
-                              transform: sort.field !== 'email' ? 'rotate(0deg)' : (sort.order === 'asc' ? 'rotate(180deg)' : 'rotate(0deg)'),
-                              transition: 'transform 0.2s ease-in-out',
-                              display: 'flex',
-                              alignItems: 'center'
-                            }}>
-                              <KeyboardArrowDownIcon fontSize="small" />
-                            </Box>
-                          </IconButton>
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif", fontWeight: 'bold' }}>
-                          작업
-                        </TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {getFilteredAndSortedStudents().map((student, index) => (
-                        <TableRow key={student.userId || student.id || index}>
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
-                            {index + 1}
-                          </TableCell>
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
-                            {student.studentNum || '정보 없음'}
-                          </TableCell>
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
-                            {student.name || '정보 없음'}
-                          </TableCell>
-                          <TableCell sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}>
-                            {student.email || '정보 없음'}
-                          </TableCell>
-                          <TableCell align="right">
-                            <Stack direction="row" spacing={1} justifyContent="flex-end">
-                              <Button
-                                variant="contained"
-                                size="small"
-                                startIcon={<CodeIcon sx={{ fontSize: '1rem' }} />}
-                                onClick={() => handleJCodeRedirect(student)}
-                                sx={{ 
-                                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                                  fontSize: '0.75rem',
-                                  py: 0.5,
-                                  px: 1.5,
-                                  minHeight: '28px',
-                                  borderRadius: '14px',
-                                  textTransform: 'none'
-                                }}
-                              >
-                                JCode
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                startIcon={<MonitorIcon sx={{ fontSize: '1rem' }} />}
-                                onClick={() => handleWatcherRedirect(student)}
-                                sx={{ 
-                                  fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                                  fontSize: '0.75rem',
-                                  py: 0.5,
-                                  px: 1.5,
-                                  minHeight: '28px',
-                                  borderRadius: '14px',
-                                  textTransform: 'none'
-                                }}
-                              >
-                                Watcher
-                              </Button>
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {getFilteredAndSortedStudents().length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                            <Typography variant="body1" color="textSecondary">
-                              검색 결과가 없거나 학생 목록을 불러오지 못했습니다.
-                            </Typography>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                <AssignmentStudentsTab 
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                  students={getFilteredAndSortedStudents()}
+                  sort={sort}
+                  onToggleSort={toggleSort}
+                  onJCodeRedirect={handleJCodeRedirect}
+                  onWatcherRedirect={handleWatcherRedirect}
+                />
               </TabPanel>
             )}
           </Box>
