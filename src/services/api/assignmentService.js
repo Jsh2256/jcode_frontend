@@ -233,22 +233,22 @@ const assignmentService = {
     });
   },
 
-  /**
-   * 과제 복사 (다른 강의로)
-   */
-  copyAssignment: async (fromCourseId, assignmentId, toCourseId, options = {}) => {
-    if (!fromCourseId || !assignmentId || !toCourseId) {
-      throw new Error('원본 강의 ID, 과제 ID, 대상 강의 ID가 필요합니다.');
-    }
+  // /**
+  //  * 과제 복사 (다른 강의로)
+  //  */
+  // copyAssignment: async (fromCourseId, assignmentId, toCourseId, options = {}) => {
+  //   if (!fromCourseId || !assignmentId || !toCourseId) {
+  //     throw new Error('원본 강의 ID, 과제 ID, 대상 강의 ID가 필요합니다.');
+  //   }
 
-    return apiPost(`/api/courses/${toCourseId}/assignments/copy`, {
-      fromCourseId,
-      assignmentId
-    }, {
-      customErrorMessage: '과제 복사에 실패했습니다.',
-      ...options
-    });
-  }
+  //   return apiPost(`/api/courses/${toCourseId}/assignments/copy`, {
+  //     fromCourseId,
+  //     assignmentId
+  //   }, {
+  //     customErrorMessage: '과제 복사에 실패했습니다.',
+  //     ...options
+  //   });
+  // }
 };
 
 export default assignmentService; 
