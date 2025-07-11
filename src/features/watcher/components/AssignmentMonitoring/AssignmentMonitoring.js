@@ -3,34 +3,13 @@ import { useParams } from 'react-router-dom';
 import {
   Container,
   Paper,
-  Box,
-  Typography,
-  CircularProgress,
-  Chip,
-  IconButton,
-  Tooltip,
-  Badge,
-  Switch,
-  FormControlLabel,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Button,
-  useTheme
+  Typography
 } from '@mui/material';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import StopIcon from '@mui/icons-material/Stop';
-import UpdateIcon from '@mui/icons-material/Update';
-import CloseIcon from '@mui/icons-material/Close';
-import WatcherBreadcrumbs from '../../../../components/common/WatcherBreadcrumbs';
-import TotalSizeChart from '../charts/TotalSizeChart';
-import ChangeChart from '../charts/ChangeChart';
-import ChartControls from '../charts/ChartControls';
-import RemainingTime from '../common/RemainingTime';
+import AssignmentMonitoringHeader from './AssignmentMonitoringHeader';
+import MonitoringControls from './MonitoringControls';
+import LogFilters from './LogFilters';
+import LogDialog from './LogDialog';
+import ChartsSection from './ChartsSection';
 import {
   calculateIntervalValue,
   fetchMonitoringData,
@@ -45,169 +24,10 @@ import { useAuth } from '../../../../contexts/AuthContext';
 import CacheManager from '../../../../utils/cache-manager';
 import { LoadingSpinner } from '../../../../components/ui';
 
-// ChartHeader 컴포넌트
-const ChartHeader = ({ student, assignment, course }) => {
-  // student가 배열인 경우 첫 번째 학생 정보만 사용하도록 처리
-  const studentData = Array.isArray(student) ? student[0] : student;
-  
-  // 데이터가 로딩되었는지 확인
-  const hasStudentData = studentData && Object.keys(studentData).length > 0;
-  const hasAssignmentData = assignment && Object.keys(assignment).length > 0;
-  const hasCourseData = course && Object.keys(course).length > 0;
-  
-  // 학생 정보 가져오기
-  const getStudentId = () => {
-    if (!hasStudentData) return null;
-    if (studentData.studentNum) return studentData.studentNum;
-    if (studentData.studentId) return studentData.studentId;
-    if (studentData.id) return studentData.id;
-    return null;
-  };
-  
-  const getStudentName = () => {
-    if (!hasStudentData) return null;
-    if (studentData.name) return studentData.name;
-    if (studentData.userName) return studentData.userName;
-    return null;
-  };
-  
-  const getStudentEmail = () => {
-    if (!hasStudentData) return null;
-    if (studentData.email) return studentData.email;
-    if (studentData.userEmail) return studentData.userEmail;
-    return null;
-  };
-  
-  // 과제 시작일/종료일 가져오기
-  const getStartDate = () => {
-    if (!hasAssignmentData) return null;
-    
-    // 속성 우선순위: startDate -> kickoffDate -> startDateTime
-    if (assignment.startDate) return assignment.startDate;
-    if (assignment.kickoffDate) return assignment.kickoffDate;
-    if (assignment.startDateTime) return assignment.startDateTime;
-    return null;
-  };
-  
-  const getEndDate = () => {
-    if (!hasAssignmentData) return null;
-    
-    // 속성 우선순위: endDate -> deadlineDate -> endDateTime
-    if (assignment.endDate) return assignment.endDate;
-    if (assignment.deadlineDate) return assignment.deadlineDate;
-    if (assignment.endDateTime) return assignment.endDateTime;
-    return null;
-  };
-  
-  // 날짜 및 시간 포맷팅 함수
-  const formatDateTime = (dateStr) => {
-    if (!dateStr) return '날짜 미정';
-    
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return '날짜 오류';
-      
-      // 년-월-일 시:분 형식으로 표시
-      return date.toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false // 24시간제 사용
-      });
-    } catch (error) {
-      //console.error('날짜 변환 오류:', error);
-      return '날짜 오류';
-    }
-  };
-  
-  const studentId = getStudentId();
-  //console.log('학번:', studentId);
-  const studentName = getStudentName();
-  const studentEmail = getStudentEmail();
-  const startDate = getStartDate();
-  const endDate = getEndDate();
-  
-  return (
-    <Paper sx={{ p: 2, mb: 2, borderRadius: 2 }} elevation={1}>
-      <Typography variant="h5" gutterBottom sx={{ 
-        fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-        mb: 2
-      }}>
-        {hasAssignmentData ? assignment.assignmentName || assignment.name : '과제 정보 로딩 중...'}
-      </Typography>
-      
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <Chip 
-          label={`학번: ${studentId || '로딩중...'}`}
-          sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
-        />
-        <Chip 
-          label={`이름: ${studentName || '로딩중...'}`}
-          sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
-        />
-        <Chip 
-          label={`이메일: ${studentEmail || '로딩중...'}`}
-          sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
-        />
-      </Box>
-      
-      <Divider sx={{ my: 1 }} />
-      
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        {hasCourseData && (
-          <Typography variant="body2" color="text.secondary">
-            <strong>강의:</strong> {course.courseName}
-          </Typography>
-        )}
-        
-        {hasAssignmentData && (
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 2, 
-            mb: 3,
-            flexWrap: 'wrap' 
-          }}>
-            <Chip 
-              label={`시작: ${new Date(assignment.startDateTime || assignment.kickoffDate).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              })}`}
-              sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
-            />
-            <Chip 
-              label={`마감: ${new Date(assignment.endDateTime || assignment.deadlineDate).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: false
-              })}`}
-              sx={{ fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif" }}
-            />
-            <RemainingTime deadline={assignment.endDateTime || assignment.deadlineDate} />
-          </Box>
-        )}
-        
-        {!hasStudentData && !hasAssignmentData && (
-          <Typography variant="body2" color="info">
-            강의 데이터 로딩 중 입니다.
-          </Typography>
-        )}
-      </Box>
-    </Paper>
-  );
-};
 
-const AssignmentPlotly = () => {
+
+const AssignmentMonitoring = () => {
   const { courseId, assignmentId, userId } = useParams();
-  const theme = useTheme();
   const { user: authUser } = useAuth(); // useAuth에서 현재 인증된 사용자 정보 가져오기
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -640,116 +460,7 @@ const AssignmentPlotly = () => {
     }
   }, [timeUnit, minuteValue]);
 
-  // 로그 다이얼로그 렌더링
-  const renderLogDialog = () => {
-    if (!selectedLog) return null;
-    
-    const isRunLog = selectedLog.type === 'run';
-    const title = isRunLog ? '실행 로그 정보' : '빌드 로그 정보';
-    const statusText = selectedLog.exit_code === 0 ? '성공' : '실패';
-    const statusColor = selectedLog.exit_code === 0 ? 
-      (theme.palette.mode === 'dark' ? '#50FA7B' : '#4CAF50') : 
-      (theme.palette.mode === 'dark' ? '#FF5555' : '#F44336');
-    
-    return (
-      <Dialog 
-        open={logDialogOpen} 
-        onClose={handleCloseLogDialog}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ 
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '16px 24px'
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {isRunLog ? '▶️' : '🔨'} {title}
-            <Chip 
-              label={statusText} 
-              size="small" 
-              sx={{ 
-                ml: 1,
-                backgroundColor: statusColor,
-                color: '#FFF',
-                fontWeight: 'bold'
-              }} 
-            />
-          </Box>
-          <IconButton 
-            onClick={handleCloseLogDialog}
-            size="small"
-          >
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          <DialogContentText component="div">
-            <Typography variant="subtitle1" gutterBottom>
-              <strong>명령어:</strong> {selectedLog.command || '정보 없음'}
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-              <strong>시간:</strong> {new Date(selectedLog.timestamp).toLocaleString()}
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-              <strong>종료 코드:</strong> {selectedLog.exit_code}
-            </Typography>
-            {selectedLog.stdout && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  <strong>표준 출력:</strong>
-                </Typography>
-                <Paper sx={{ 
-                  p: 2, 
-                  backgroundColor: theme => theme.palette.mode === 'dark' ? '#282A36' : '#F5F5F5',
-                  maxHeight: '200px',
-                  overflow: 'auto' 
-                }}>
-                  <pre style={{ 
-                    margin: 0, 
-                    whiteSpace: 'pre-wrap', 
-                    wordBreak: 'break-word',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '14px'
-                  }}>
-                    {selectedLog.stdout}
-                  </pre>
-                </Paper>
-              </Box>
-            )}
-            {selectedLog.stderr && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle1" gutterBottom>
-                  <strong>표준 에러:</strong>
-                </Typography>
-                <Paper sx={{ 
-                  p: 2, 
-                  backgroundColor: theme => theme.palette.mode === 'dark' ? '#282A36' : '#F5F5F5',
-                  maxHeight: '200px',
-                  overflow: 'auto' 
-                }}>
-                  <pre style={{ 
-                    margin: 0, 
-                    whiteSpace: 'pre-wrap', 
-                    wordBreak: 'break-word',
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontSize: '14px',
-                    color: theme => theme.palette.mode === 'dark' ? '#FF5555' : '#F44336'
-                  }}>
-                    {selectedLog.stderr}
-                  </pre>
-                </Paper>
-              </Box>
-            )}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseLogDialog}>닫기</Button>
-        </DialogActions>
-      </Dialog>
-    );
-  };
+
 
   if (loading) {
     return <LoadingSpinner />;
@@ -780,214 +491,54 @@ const AssignmentPlotly = () => {
           `1px solid ${theme.palette.mode === 'dark' ? '#44475A' : '#E0E0E0'}`,
         borderRadius: '16px'
       }}>
-        <WatcherBreadcrumbs 
-          paths={[
-            { 
-              text: course?.courseName || '로딩중...', 
-              to: `/watcher/class/${course?.courseId}` 
-            },
-            { 
-              text: assignment?.assignmentName || '로딩중...', 
-              to: `/watcher/class/${course?.courseId}/assignment/${assignmentId}` 
-            },
-            {
-              text: student?.name || '학생 모니터링',
-              to: `/watcher/class/${course?.courseId}/assignment/${assignmentId}/plotly/${userId}`
-            }
-          ]} 
+        <AssignmentMonitoringHeader 
+          course={course}
+          assignment={assignment}
+          student={student}
+          assignmentId={assignmentId}
+          userId={userId}
         />
 
-        <ChartHeader 
+        <MonitoringControls 
+          timeUnit={timeUnit}
+          onTimeUnitChange={handleTimeUnitChange}
+          minuteValue={minuteValue}
+          onMinuteChange={handleMinuteChange}
+          onDataRefresh={handleDataRefresh}
+          isRefreshing={isRefreshing}
+          timeUnits={timeUnits}
+          liveUpdate={liveUpdate}
+          onToggleLiveUpdate={toggleLiveUpdate}
+          nextUpdateTime={nextUpdateTime}
+          lastUpdated={lastUpdated}
+        />
+
+        <LogFilters 
+          showRunLogs={showRunLogs}
+          onToggleRunLogs={handleToggleRunLogs}
+          showBuildLogs={showBuildLogs}
+          onToggleBuildLogs={handleToggleBuildLogs}
+          showSuccessLogs={showSuccessLogs}
+          onToggleSuccessLogs={handleToggleSuccessLogs}
+          showFailLogs={showFailLogs}
+          onToggleFailLogs={handleToggleFailLogs}
+        />
+
+        <ChartsSection 
+          data={data}
           student={student}
           assignment={assignment}
-          course={course}
+          filteredLogs={filteredLogs}
         />
-
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          mb: 2,
-          flexWrap: 'wrap',
-          gap: 1
-        }}>
-          <ChartControls 
-            timeUnit={timeUnit}
-            handleTimeUnitChange={handleTimeUnitChange}
-            minuteValue={minuteValue}
-            handleMinuteChange={handleMinuteChange}
-            handleDataRefresh={handleDataRefresh}
-            isRefreshing={isRefreshing}
-            timeUnits={timeUnits}
-          />
-          
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            ml: 'auto'
-          }}>
-            {liveUpdate && (
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: 1, 
-                backgroundColor: theme => theme.palette.mode === 'dark' ? 'rgba(189, 147, 249, 0.15)' : 'rgba(98, 114, 164, 0.1)',
-                p: '4px 8px',
-                borderRadius: '16px',
-                border: '1px solid',
-                borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(189, 147, 249, 0.3)' : 'rgba(98, 114, 164, 0.2)',
-              }}>
-                <CircularProgress 
-                  size={16}
-                  variant={nextUpdateTime < 5 ? "indeterminate" : "determinate"}
-                  value={(30 - nextUpdateTime) * (100/30)}
-                  color="primary"
-                  thickness={6}
-                />
-                <Typography 
-                  variant="caption" 
-                  id="countdown-timer"
-                  sx={{ 
-                    fontFamily: "'JetBrains Mono', 'Noto Sans KR', sans-serif",
-                    fontSize: '0.75rem',
-                    fontWeight: 'bold',
-                    color: theme => theme.palette.mode === 'dark' ? '#BD93F9' : '#6272A4',
-                  }}
-                >
-                  {nextUpdateTime}초 후 갱신
-                </Typography>
-              </Box>
-            )}
-            
-            {lastUpdated && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR')}
-              </Typography>
-            )}
-            
-            <FormControlLabel
-              control={
-                <Switch 
-                  checked={liveUpdate}
-                  onChange={toggleLiveUpdate}
-                  color="primary"
-                />
-              }
-              label={
-                <Typography variant="body2" sx={{ fontSize: '0.85rem' }}>
-                  실시간 업데이트
-                </Typography>
-              }
-              sx={{ mr: 0 }}
-            />
-            
-            <Tooltip title="지금 데이터 새로고침">
-              <IconButton 
-                onClick={() => handleDataRefresh(false)} 
-                disabled={isRefreshing}
-                color="primary"
-                size="small"
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-
-        {/* 로그 필터 컨트롤 추가 */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            control={
-              <Switch 
-                checked={showRunLogs}
-                onChange={handleToggleRunLogs}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#2E7D32', // 더 진한 녹색
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#2E7D32',
-                  }
-                }}
-              />
-            }
-            label="실행 로그"
-          />
-          <FormControlLabel
-            control={
-              <Switch 
-                checked={showBuildLogs}
-                onChange={handleToggleBuildLogs}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#0277BD', // 더 진한 파란색
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#0277BD',
-                  }
-                }}
-              />
-            }
-            label="빌드 로그"
-          />
-          <FormControlLabel
-            control={
-              <Switch 
-                checked={showSuccessLogs}
-                onChange={handleToggleSuccessLogs}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#2E7D32', // 더 진한 녹색
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#2E7D32',
-                  }
-                }}
-              />
-            }
-            label="성공 로그"
-          />
-          <FormControlLabel
-            control={
-              <Switch 
-                checked={showFailLogs}
-                onChange={handleToggleFailLogs}
-                sx={{
-                  '& .MuiSwitch-switchBase.Mui-checked': {
-                    color: '#C62828', // 더 진한 빨간색
-                  },
-                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                    backgroundColor: '#C62828',
-                  }
-                }}
-              />
-            }
-            label="실패 로그"
-          />
-        </Box>
-
-        <Box sx={{ width: '100%' }}>
-          <TotalSizeChart 
-            data={data} 
-            student={student} 
-            assignment={assignment}
-            runLogs={filteredLogs.runLogs}
-            buildLogs={filteredLogs.buildLogs}
-          />
-
-          <ChangeChart 
-            data={data} 
-            student={student} 
-            assignment={assignment} 
-          />
-        </Box>
       </Paper>
       
-      {/* 로그 상세 정보 다이얼로그 */}
-      {renderLogDialog()}
+      <LogDialog 
+        open={logDialogOpen}
+        onClose={handleCloseLogDialog}
+        selectedLog={selectedLog}
+      />
     </Container>
   );
 };
 
-export default AssignmentPlotly;
+export default AssignmentMonitoring;

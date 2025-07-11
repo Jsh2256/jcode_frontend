@@ -134,7 +134,7 @@ const TotalSizeChart = ({ data, student, assignment, runLogs = [], buildLogs = [
       >
         <PlotlyChart
           chartId="totalSizeChart"
-          title="전체 코드 크기 변화 및 로그 기록"
+          //title="전체 코드 크기 변화 및 로그 기록"
           traces={traces}
           loading={false}
           error={null}

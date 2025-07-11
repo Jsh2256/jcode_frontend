@@ -120,7 +120,7 @@ const ChangeChart = ({ data, student, assignment }) => {
       >
         <PlotlyChart
           chartId="changeChart"
-          title="코드 변경 추이"
+          //title="코드 변경 추이"
           traces={traces}
           loading={false}
           error={null}
