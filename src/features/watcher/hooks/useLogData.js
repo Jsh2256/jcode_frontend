@@ -1,10 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { 
-  fetchBuildLogs, 
-  fetchRunLogs, 
-  fetchLogAverage,
-  fetchSnapshotAverage 
-} from '../components/charts/api';
+import { fetchMonitoringData } from '../components/charts/api';
 
 export const useLogData = (courseId, assignmentId) => {
   const [buildLogs, setBuildLogs] = useState([]);
@@ -22,96 +17,81 @@ export const useLogData = (courseId, assignmentId) => {
     showSnapshotAverage: false
   });
 
-  // 빌드 로그 로드
-  const loadBuildLogs = useCallback(async (startDate, endDate) => {
+  // 모니터링 데이터를 통한 로그 데이터 로드 (실제 로그 API가 없으므로 대체)
+  const loadLogDataFromMonitoring = useCallback(async (intervalValue, userId) => {
     if (!courseId || !assignmentId) return;
 
     try {
       setLoading(true);
       setError(null);
       
-      const logs = await fetchBuildLogs(courseId, assignmentId, startDate, endDate);
-      setBuildLogs(logs || []);
-    } catch (err) {
-      console.error('빌드 로그 로드 실패:', err);
-      setError(err.message || '빌드 로그를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, assignmentId]);
+      // 실제 로그 API가 없으므로 모니터링 데이터를 활용
+      const monitoringData = await fetchMonitoringData(
+        intervalValue || 5,
+        courseId, 
+        assignmentId, 
+        userId
+      );
 
-  // 실행 로그 로드
-  const loadRunLogs = useCallback(async (startDate, endDate) => {
-    if (!courseId || !assignmentId) return;
+      // 모니터링 데이터를 로그 형태로 변환 (예시)
+      if (monitoringData && Array.isArray(monitoringData)) {
+        const mockBuildLogs = monitoringData.map((item, index) => ({
+          id: `build_${index}`,
+          timestamp: item.snapshotTime || new Date().toISOString(),
+          message: `Build log ${index + 1}`,
+          status: index % 2 === 0 ? 'SUCCESS' : 'FAILED',
+          userEmail: item.userEmail || 'unknown@example.com',
+          type: 'build'
+        }));
 
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const logs = await fetchRunLogs(courseId, assignmentId, startDate, endDate);
-      setRunLogs(logs || []);
-    } catch (err) {
-      console.error('실행 로그 로드 실패:', err);
-      setError(err.message || '실행 로그를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, assignmentId]);
+        const mockRunLogs = monitoringData.map((item, index) => ({
+          id: `run_${index}`,
+          timestamp: item.snapshotTime || new Date().toISOString(),
+          message: `Run log ${index + 1}`,
+          status: index % 3 === 0 ? 'COMPLETED' : 'RUNNING',
+          userEmail: item.userEmail || 'unknown@example.com',
+          type: 'run'
+        }));
 
-  // 로그 평균 데이터 로드
-  const loadLogAverage = useCallback(async (startDate, endDate) => {
-    if (!courseId || !assignmentId) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const avgData = await fetchLogAverage(courseId, assignmentId, startDate, endDate);
-      setLogAverage(avgData || []);
-    } catch (err) {
-      console.error('로그 평균 데이터 로드 실패:', err);
-      setError(err.message || '로그 평균 데이터를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, assignmentId]);
-
-  // 스냅샷 평균 데이터 로드
-  const loadSnapshotAverage = useCallback(async (startDate, endDate) => {
-    if (!courseId || !assignmentId) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const avgData = await fetchSnapshotAverage(courseId, assignmentId, startDate, endDate);
-      setSnapshotAverage(avgData || []);
-    } catch (err) {
-      console.error('스냅샷 평균 데이터 로드 실패:', err);
-      setError(err.message || '스냅샷 평균 데이터를 불러오는데 실패했습니다.');
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, assignmentId]);
-
-  // 모든 로그 데이터 로드
-  const loadAllLogData = useCallback(async (startDate, endDate) => {
-    setLoading(true);
-    
-    try {
-      await Promise.all([
-        logFilters.showBuildLogs && loadBuildLogs(startDate, endDate),
-        logFilters.showRunLogs && loadRunLogs(startDate, endDate),
-        logFilters.showLogAverage && loadLogAverage(startDate, endDate),
-        logFilters.showSnapshotAverage && loadSnapshotAverage(startDate, endDate)
-      ].filter(Boolean));
+        setBuildLogs(mockBuildLogs);
+        setRunLogs(mockRunLogs);
+      }
     } catch (err) {
       console.error('로그 데이터 로드 실패:', err);
       setError(err.message || '로그 데이터를 불러오는데 실패했습니다.');
     } finally {
       setLoading(false);
     }
-  }, [courseId, assignmentId, logFilters, loadBuildLogs, loadRunLogs, loadLogAverage, loadSnapshotAverage]);
+  }, [courseId, assignmentId]);
+
+  // 빌드 로그 로드 (플레이스홀더)
+  const loadBuildLogs = useCallback(async (startDate, endDate) => {
+    console.log('빌드 로그 API가 구현되지 않았습니다. 모니터링 데이터를 사용해주세요.');
+    setBuildLogs([]);
+  }, []);
+
+  // 실행 로그 로드 (플레이스홀더)
+  const loadRunLogs = useCallback(async (startDate, endDate) => {
+    console.log('실행 로그 API가 구현되지 않았습니다. 모니터링 데이터를 사용해주세요.');
+    setRunLogs([]);
+  }, []);
+
+  // 로그 평균 데이터 로드 (플레이스홀더)
+  const loadLogAverage = useCallback(async (startDate, endDate) => {
+    console.log('로그 평균 API가 구현되지 않았습니다.');
+    setLogAverage([]);
+  }, []);
+
+  // 스냅샷 평균 데이터 로드 (플레이스홀더)
+  const loadSnapshotAverage = useCallback(async (startDate, endDate) => {
+    console.log('스냅샷 평균 API가 구현되지 않았습니다.');
+    setSnapshotAverage([]);
+  }, []);
+
+  // 모든 로그 데이터 로드
+  const loadAllLogData = useCallback(async (startDate, endDate) => {
+    console.log('통합 로그 로딩은 현재 지원되지 않습니다. loadLogDataFromMonitoring을 사용해주세요.');
+  }, []);
 
   // 로그 필터 토글
   const toggleLogFilter = useCallback((filterName) => {
@@ -220,8 +200,8 @@ export const useLogData = (courseId, assignmentId) => {
 
   // 로그 새로고침
   const refreshLogs = useCallback((startDate, endDate) => {
-    loadAllLogData(startDate, endDate);
-  }, [loadAllLogData]);
+    console.log('로그 새로고침 기능은 현재 지원되지 않습니다. loadLogDataFromMonitoring을 사용해주세요.');
+  }, []);
 
   // 로그 초기화
   const clearLogs = useCallback(() => {
@@ -246,7 +226,7 @@ export const useLogData = (courseId, assignmentId) => {
     filteredLogs,
     logStatistics: getLogStatistics,
     
-    // 액션
+    // 액션 (실제 API가 구현되면 활성화)
     loadBuildLogs,
     loadRunLogs,
     loadLogAverage,
@@ -254,6 +234,9 @@ export const useLogData = (courseId, assignmentId) => {
     loadAllLogData,
     refreshLogs,
     clearLogs,
+    
+    // 모니터링 데이터 기반 로그 로딩
+    loadLogDataFromMonitoring,
     
     // 필터
     toggleLogFilter,

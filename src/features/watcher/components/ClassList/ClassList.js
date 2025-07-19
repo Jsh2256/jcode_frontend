@@ -28,7 +28,6 @@ import {
   Checkbox,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../../../api/axios';
 import { selectStyles } from '../../../../styles/selectStyles';
 import AddIcon from '@mui/icons-material/Add';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -36,12 +35,24 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { LoadingSpinner, Button } from '../../../../components/ui';
+import { useClassList } from '../../hooks';
 
 const ClassList = () => {
   const { user } = useAuth();
-  const [classes, setClasses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const {
+    classes,
+    loading,
+    error,
+    availableYears,
+    availableTerms,
+    currentSemester,
+    loadClasses,
+    addClass,
+    regenerateCourseKey,
+    filterClasses,
+    validateClassForm
+  } = useClassList();
+
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedTerm, setSelectedTerm] = useState('all');
   const [openDialog, setOpenDialog] = useState(false);
@@ -66,78 +77,24 @@ const ClassList = () => {
   const [copied, setCopied] = useState(false);
   const navigate = useNavigate();
 
-  // 고유한 연도와 학기 목록 추출
-  const years = [...new Set(classes.map(course => course.courseYear))].sort((a, b) => b - a);
-  const terms = [...new Set(classes.map(course => course.courseTerm))].sort();
+  // 고유한 연도와 학기 목록 (훅에서 제공)
+  const years = availableYears;
+  const terms = availableTerms;
 
   useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        let response;
-        
-        if (user?.role === 'ADMIN') {
-          response = await axios.get('/api/courses');
-        } else if (user?.role === 'ASSISTANT') {
-          response = await axios.get('/api/users/me/assistant/courses');
-        } else {
-          response = await axios.get('/api/users/me/courses');
-        }
-        
-        const formattedData = user?.role === 'ADMIN' ? 
-          response.data.map(course => ({
-            courseId: course.courseId,
-            courseName: course.name,
-            courseCode: course.code,
-            courseProfessor: course.professor,
-            courseYear: course.year,
-            courseTerm: course.term,
-            courseClss: course.clss
-          })) : response.data;
-        
-        setClasses(formattedData);
-        setLoading(false);
-      } catch (error) {
-        setError('수업 목록을 불러오는데 실패했습니다.');
-        setLoading(false);
-      }
-    };
+    // 현재 학기로 초기값 설정
+    if (currentSemester) {
+      setSelectedYear(currentSemester.year);
+      setSelectedTerm(currentSemester.term);
+    }
+  }, [currentSemester]);
 
-    // 현재 날짜 기준으로 연도와 학기 설정 (courses와 독립적으로 실행)
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth() + 1;
-    const currentTerm = currentMonth >= 9 ? 2 : 1;
-    
-    setSelectedYear(currentYear);
-    setSelectedTerm(currentTerm);
+  // 필터링된 강의 목록 (훅에서 제공)
+  const filteredClasses = filterClasses(selectedYear, selectedTerm);
 
-    fetchClasses();
-  }, [user]);
-
-  // 필터링된 강의 목록
-  const filteredClasses = classes.filter(course => {
-    const yearMatch = selectedYear === 'all' || course.courseYear === selectedYear;
-    const termMatch = selectedTerm === 'all' || course.courseTerm === selectedTerm;
-    return yearMatch && termMatch;
-  });
-
-  // 유효성 검사 함수
+  // 유효성 검사 함수 (훅에서 제공)
   const validateForm = () => {
-    let isValid = true;
-    const errors = { courseClss: '', courseCode: '' };
-
-    // 분반 유효성 검사 - 숫자만 허용
-    if (!/^\d+$/.test(newClass.clss)) {
-      errors.courseClss = '분반은 숫자만 입력 가능합니다';
-      isValid = false;
-    }
-
-    // 과목 코드 유효성 검사 - 영문자로 시작하고 영문자+숫자 조합만 허용
-    if (!/^[A-Za-z][A-Za-z0-9]*$/.test(newClass.code)) {
-      errors.courseCode = '영문자로 시작하고 영문자와 숫자만 사용 가능합니다';
-      isValid = false;
-    }
-
+    const { isValid, errors } = validateClassForm(newClass);
     setFormErrors(errors);
     return isValid;
   };
@@ -145,26 +102,9 @@ const ClassList = () => {
   const handleAddClass = async () => {
     if (!validateForm()) return;
     
-    try {
-      const createResponse = await axios.post('/api/courses', {
-        code: newClass.code,
-        name: newClass.name,
-        professor: newClass.professor,
-        year: newClass.year,
-        term: newClass.term,
-        clss: parseInt(newClass.clss),
-        vnc: newClass.vnc
-      });
-
-      const { courseId, courseKey } = createResponse.data;
-
-      await axios.post(`/api/users/me/courses`, {
-        courseKey: courseKey
-      });
-
-      const response = await axios.get('/api/users/me/courses');
-      setClasses(response.data);
-
+    const result = await addClass(newClass);
+    
+    if (result.success) {
       setOpenDialog(false);
       setNewClass({
         code: '',
@@ -179,12 +119,11 @@ const ClassList = () => {
 
       setCourseKeyDialog({
         open: true,
-        courseKey: courseKey,
-        courseId: courseId
+        courseKey: result.courseKey,
+        courseId: result.courseId
       });
-
-    } catch (error) {
-      setError('수업 추가에 실패했습니다.');
+    } else {
+      console.error('수업 추가 실패:', result.error);
     }
   };
 
@@ -195,17 +134,18 @@ const ClassList = () => {
     setTimeout(() => setCopied(false), 2000); // 2초 후 사라짐
   };
 
-  // 재발급 핸들러 수정
+  // 재발급 핸들러 (훅에서 제공)
   const handleRegenerateKey = async (courseId) => {
-    try {
-      const response = await axios.get(`/api/courses/${courseId}/key`);
+    const result = await regenerateCourseKey(courseId);
+    
+    if (result.success) {
       setCourseKeyDialog({
         open: true,
-        courseKey: response.data,
+        courseKey: result.courseKey,
         courseId: courseId
       });
-    } catch (error) {
-      setError('참가 코드 재발급에 실패했습니다.');
+    } else {
+      console.error('참가 코드 재발급 실패:', result.error);
     }
   };
 

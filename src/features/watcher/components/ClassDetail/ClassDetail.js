@@ -11,9 +11,9 @@ import api from '../../../../api/axios';
 import { useTheme } from '../../../../contexts/ThemeContext';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { createStringSort } from '../../../../utils/sortHelpers';
 import { LoadingSpinner } from '../../../../components/ui';
 import { FONT_FAMILY } from '../../../../constants/uiConstants';
+import { useCourseData, useStudentManagement } from '../../hooks';
 import ClassHeader from './ClassHeader';
 import ClassTabs from './ClassTabs';
 import StudentsTab from './StudentsTab';
@@ -26,18 +26,30 @@ import WithdrawUserDialog from './dialogs/WithdrawUserDialog';
 
 const ClassDetail = () => {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [course, setCourse] = useState(null);
-  const [sort, setSort] = useState({
-    field: 'email',
-    order: 'asc'
-  });
   const { courseId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
+  
+  // 커스텀 훅 사용
+  const {
+    course,
+    loading: courseLoading,
+    error: courseError,
+    canViewStudents,
+    canCreateAssignments
+  } = useCourseData(courseId);
+
+  const [students, setStudents] = useState([]);
+  const {
+    searchQuery,
+    sort,
+    filteredAndSortedStudents,
+    setSearchQuery,
+    toggleSort
+  } = useStudentManagement(students, user?.role, false);
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [assignments, setAssignments] = useState([]);
   const [openAssignmentDialog, setOpenAssignmentDialog] = useState(false);
   const [currentTab, setCurrentTab] = useState(() => {
@@ -82,89 +94,31 @@ const ClassDetail = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      if (user?.role === 'ADMIN') {
-        const coursesResponse = await api.get(`/api/courses/${courseId}/details`);
-        setCourse(coursesResponse.data);
-        setAssignments(coursesResponse.data.assignments || []);
-        
+      // 학생 목록 로드 (교수/조교/관리자만)
+      if (canViewStudents) {
         const studentsResponse = await api.get(`/api/courses/${courseId}/users`);
         setStudents(studentsResponse.data);
-      } else if (user?.role === 'PROFESSOR' || user?.role === 'ASSISTANT') {
-        const coursesResponse = await api.get('/api/users/me/courses/details');
-        const foundCourse = coursesResponse.data.find(c => c.courseId === parseInt(courseId));
-        if (!foundCourse) {
-          throw new Error('강의를 찾을 수 없습니다.');
-        }
-        setCourse(foundCourse);
-        setAssignments(foundCourse.assignments || []);
-        
-        const studentsResponse = await api.get(`/api/courses/${courseId}/users`);
-        setStudents(studentsResponse.data);
-      } else {
-        const coursesResponse = await api.get('/api/users/me/courses/details');
-        const foundCourse = coursesResponse.data.find(c => c.courseId === parseInt(courseId));
-        if (!foundCourse) {
-          throw new Error('강의를 찾을 수 없습니다.');
-        }
-        setCourse(foundCourse);
-        setAssignments(foundCourse.assignments || []);
       }
+      
+      // 과제 목록은 course 데이터에서 가져오기
+      if (course?.assignments) {
+        setAssignments(course.assignments);
+      }
+      
       setLoading(false);
     } catch (error) {
       setError('데이터를 불러오는데 실패했습니다.');
       setLoading(false);
     }
-  }, [courseId, user]);
+  }, [courseId, canViewStudents, course]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const getFilteredAndSortedStudents = () => {
-    // 검색 조건에 맞는 사용자들만 필터링
-    const filtered = students.filter(student => {
-      const searchLower = searchQuery.toLowerCase();
-      const emailMatch = student.email?.toLowerCase().includes(searchLower);
-      const nameMatch = student.name?.toLowerCase().includes(searchLower);
-      const studentNumMatch = String(student.studentNum || '').toLowerCase().includes(searchLower);
-      return emailMatch || nameMatch || studentNumMatch;
-    });
-
-    // 정렬: 교수 > 조교 > 학생 > 관리자 순서로 정렬
-    return filtered.sort((a, b) => {
-      // 역할 우선순위 정의 (순서 변경)
-      const roleOrder = {
-        'PROFESSOR': 0,
-        'ASSISTANT': 1,
-        'STUDENT': 2,
-        'ADMIN': 3
-      };
-
-      // 먼저 역할로 정렬
-      if (roleOrder[a.courseRole] !== roleOrder[b.courseRole]) {
-        return roleOrder[a.courseRole] - roleOrder[b.courseRole];
-      }
-      
-      // 역할이 같은 경우 선택된 정렬 기준으로 정렬
-      const fieldMapping = {
-        'email': 'email',
-        'name': 'name', 
-        'studentNum': 'studentNum'
-      };
-      
-      const fieldToSort = fieldMapping[sort.field] || 'email';
-      const sortFunction = createStringSort(fieldToSort, sort.order === 'asc');
-      
-      return sortFunction(a, b);
-    });
-  };
-
-  const toggleSort = (field) => {
-    setSort(prev => ({
-      field: field,
-      order: prev.field === field ? (prev.order === 'asc' ? 'desc' : 'asc') : 'asc'
-    }));
-  };
+  // 통합 로딩 상태
+  const isLoading = courseLoading || loading;
+  const finalError = courseError || error;
 
   const handleAddAssignment = async (assignmentData) => {
     try {
@@ -319,11 +273,11 @@ const ClassDetail = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  if (error) {
+  if (finalError) {
     return (
       <Container maxWidth="md" sx={{ mt: 4 }}>
         <Paper elevation={3} sx={{ p: 3 }}>
@@ -332,7 +286,7 @@ const ClassDetail = () => {
             align="center"
             sx={{ fontFamily: FONT_FAMILY }}
           >
-            {error}
+            {finalError}
           </Typography>
         </Paper>
       </Container>
@@ -373,7 +327,7 @@ const ClassDetail = () => {
           {/* 학생 목록 탭 */}
           {currentTab === 'students' && (
             <StudentsTab
-              students={getFilteredAndSortedStudents()}
+              students={filteredAndSortedStudents}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               sort={sort}

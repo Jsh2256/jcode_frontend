@@ -19,7 +19,11 @@ export { default as RemainingTime } from './components/common/RemainingTime';
 
 // Custom Hooks
 export {
-  useWatcherData,
+  useStudentManagement,
   useAssignmentData,
-  useClassData
+  useCourseData,
+  useChartData,
+  useLiveUpdate,
+  useLogData,
+  useClassList
 } from './hooks'; 

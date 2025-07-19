@@ -6,6 +6,7 @@ export { useAssignmentData } from './useAssignmentData';
 export { useCourseData } from './useCourseData';
 export { useChartData } from './useChartData';
 export { useLogData } from './useLogData';
+export { useClassList } from './useClassList';
 
 // 실시간 업데이트 훅
 export { useLiveUpdate } from './useLiveUpdate'; 

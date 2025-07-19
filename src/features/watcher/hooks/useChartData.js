@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchChartDataByTimeRange, fetchSnapshots } from '../components/charts/api';
+import { fetchChartDataByTimeRange, fetchMonitoringData } from '../components/charts/api';
 
 export const useChartData = (courseId, assignmentId) => {
   const [chartData, setChartData] = useState([]);
@@ -71,23 +71,22 @@ export const useChartData = (courseId, assignmentId) => {
     }
   }, [courseId, assignmentId]);
 
-  // 스냅샷 데이터 로드
-  const loadSnapshotData = useCallback(async (userId, startDate, endDate) => {
+  // 모니터링 데이터 로드 (스냅샷 대체)
+  const loadMonitoringData = useCallback(async (intervalValue, userId) => {
     try {
       setLoading(true);
       
-      const snapshots = await fetchSnapshots(
+      const monitoringData = await fetchMonitoringData(
+        intervalValue || 5, // 기본 5분 간격
         courseId, 
         assignmentId, 
-        userId,
-        startDate,
-        endDate
+        userId
       );
 
-      return snapshots || [];
+      return monitoringData || [];
     } catch (err) {
-      console.error('스냅샷 데이터 로드 실패:', err);
-      setError(err.message || '스냅샷 데이터를 불러오는데 실패했습니다.');
+      console.error('모니터링 데이터 로드 실패:', err);
+      setError(err.message || '모니터링 데이터를 불러오는데 실패했습니다.');
       return [];
     } finally {
       setLoading(false);
@@ -210,7 +209,7 @@ export const useChartData = (courseId, assignmentId) => {
     // 액션
     loadChartData,
     loadStudentData,
-    loadSnapshotData,
+    loadMonitoringData,
     refreshChartData,
     clearSelectedStudent,
     setSelectedStudent,

@@ -116,7 +116,7 @@ const {
   statistics,
   loadChartData,
   loadStudentData,
-  loadSnapshotData,
+  loadMonitoringData,
   refreshChartData,
   clearSelectedStudent,
   transformTotalSizeData,
@@ -133,7 +133,7 @@ const {
 **주요 기능:**
 - 차트 데이터 로딩 및 변환
 - 학생별 데이터 필터링
-- 스냅샷 데이터 관리
+- 모니터링 데이터 관리
 - 통계 데이터 계산
 
 ### 5. useLiveUpdate
@@ -171,7 +171,7 @@ const {
 - 간격 조정
 
 ### 6. useLogData
-로그 데이터 관리 기능을 제공합니다.
+로그 데이터 관리 기능을 제공합니다. ⚠️ **현재 로그 API가 구현되지 않아 제한적입니다.**
 
 ```javascript
 import { useLogData } from '../hooks';
@@ -186,18 +186,13 @@ const {
   logFilters,
   filteredLogs,
   logStatistics,
-  loadBuildLogs,
-  loadRunLogs,
-  loadLogAverage,
-  loadSnapshotAverage,
-  loadAllLogData,
-  refreshLogs,
-  clearLogs,
+  loadLogDataFromMonitoring, // 실제 사용 가능한 함수
   toggleLogFilter,
   toggleAllFilters,
   searchLogs,
   getUserLogs,
-  getLogsByType
+  getLogsByType,
+  clearLogs
 } = useLogData(courseId, assignmentId);
 ```
 
@@ -206,10 +201,41 @@ const {
 - `assignmentId`: 과제 ID
 
 **주요 기능:**
-- 빌드/실행 로그 관리
-- 로그 필터링
-- 로그 검색
+- 로그 필터링 및 검색
 - 통계 계산
+- 모니터링 데이터 기반 로그 생성 (대체 기능)
+
+**현재 제한사항:**
+- 실제 로그 API(`fetchBuildLogs`, `fetchRunLogs` 등)가 구현되지 않음
+- `loadLogDataFromMonitoring` 함수를 통해 모니터링 데이터 기반 샘플 로그 생성 가능
+
+### 7. useClassList
+강의 목록 관리 기능을 제공합니다.
+
+```javascript
+import { useClassList } from '../hooks';
+
+const {
+  classes,
+  loading,
+  error,
+  availableYears,
+  availableTerms,
+  currentSemester,
+  loadClasses,
+  addClass,
+  regenerateCourseKey,
+  deleteClass,
+  filterClasses,
+  validateClassForm
+} = useClassList();
+```
+
+**주요 기능:**
+- 강의 목록 로딩
+- 강의 추가/삭제
+- 참가 코드 관리
+- 필터링 및 유효성 검사
 
 ## 사용 예시
 
@@ -258,7 +284,7 @@ import { useLogData, useLiveUpdate, useChartData } from '../hooks';
 
 const AssignmentMonitoring = ({ courseId, assignmentId }) => {
   // 로그 데이터
-  const { loadAllLogData, filteredLogs, logFilters, toggleLogFilter } = useLogData(courseId, assignmentId);
+  const { loadLogDataFromMonitoring, filteredLogs, logFilters, toggleLogFilter } = useLogData(courseId, assignmentId);
   
   // 차트 데이터
   const { loadChartData, refreshChartData } = useChartData(courseId, assignmentId);
@@ -267,9 +293,9 @@ const AssignmentMonitoring = ({ courseId, assignmentId }) => {
   const updateFunction = React.useCallback(async () => {
     await Promise.all([
       refreshChartData(),
-      loadAllLogData(new Date(Date.now() - 24*60*60*1000), new Date()) // 최근 24시간
+      loadLogDataFromMonitoring(5, 'userId') // 5분 간격, 특정 사용자
     ]);
-  }, [refreshChartData, loadAllLogData]);
+  }, [refreshChartData, loadLogDataFromMonitoring]);
   
   const { 
     isActive, 
@@ -305,4 +331,16 @@ const AssignmentMonitoring = ({ courseId, assignmentId }) => {
 1. TypeScript 타입 정의 추가
 2. 단위 테스트 작성
 3. React Query/SWR과의 통합 고려
-4. 추가적인 성능 최적화 
+4. 추가적인 성능 최적화
+5. **로그 관련 실제 API 구현 및 연동**
+
+## API 제한사항
+
+⚠️ **현재 일부 API 함수들이 구현되지 않았습니다:**
+
+- `fetchBuildLogs`: 빌드 로그 조회
+- `fetchRunLogs`: 실행 로그 조회
+- `fetchLogAverage`: 로그 평균 데이터
+- `fetchSnapshotAverage`: 스냅샷 평균 데이터
+
+이러한 함수들이 구현되면 `useLogData` 훅의 전체 기능을 사용할 수 있습니다. 
