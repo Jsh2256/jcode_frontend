@@ -13,7 +13,7 @@ import { useAuth } from '../../../../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { LoadingSpinner } from '../../../../components/ui';
 import { FONT_FAMILY } from '../../../../constants/uiConstants';
-import { useCourseData, useStudentManagement } from '../../hooks';
+import { useCourseData } from '../../hooks';
 import ClassHeader from './ClassHeader';
 import ClassTabs from './ClassTabs';
 import StudentsTab from './StudentsTab';
@@ -40,13 +40,79 @@ const ClassDetail = () => {
   } = useCourseData(courseId);
 
   const [students, setStudents] = useState([]);
-  const {
-    searchQuery,
-    sort,
-    filteredAndSortedStudents,
-    setSearchQuery,
-    toggleSort
-  } = useStudentManagement(students, user?.role, false);
+  
+  // 직접 필터링 및 정렬 로직 (모든 사용자 포함)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sort, setSort] = useState({
+    field: 'email',
+    order: 'asc'
+  });
+
+  // 정렬 토글 함수
+  const toggleSort = (field) => {
+    setSort(prev => ({
+      field: field,
+      order: prev.field === field ? (prev.order === 'asc' ? 'desc' : 'asc') : 'asc'
+    }));
+  };
+
+  // 필터링 및 정렬된 사용자 목록 (교수, 조교, 학생 모두 포함)
+  const getFilteredAndSortedStudents = () => {
+    // 검색 조건에 맞는 사용자들만 필터링
+    const filtered = students.filter(student => {
+      const searchLower = searchQuery.toLowerCase();
+      const emailMatch = student.email?.toLowerCase().includes(searchLower);
+      const nameMatch = student.name?.toLowerCase().includes(searchLower);
+      const studentNumMatch = String(student.studentNum || '').toLowerCase().includes(searchLower);
+      return emailMatch || nameMatch || studentNumMatch;
+    });
+
+    // 정렬: 교수 > 조교 > 학생 > 관리자 순서로 정렬
+    return filtered.sort((a, b) => {
+      // 역할 우선순위 정의
+      const roleOrder = {
+        'PROFESSOR': 0,
+        'ASSISTANT': 1,
+        'STUDENT': 2,
+        'ADMIN': 3
+      };
+
+      // 먼저 courseRole로 정렬, 없으면 role로 정렬
+      const aRole = a.courseRole || a.role;
+      const bRole = b.courseRole || b.role;
+
+      if (roleOrder[aRole] !== roleOrder[bRole]) {
+        return roleOrder[aRole] - roleOrder[bRole];
+      }
+      
+      // 역할이 같은 경우 선택된 정렬 기준으로 정렬
+      let aValue = '';
+      let bValue = '';
+      
+      switch(sort.field) {
+        case 'email':
+          aValue = a.email || '';
+          bValue = b.email || '';
+          break;
+        case 'name':
+          aValue = a.name || '';
+          bValue = b.name || '';
+          break;
+        case 'studentNum':
+          aValue = String(a.studentNum || '');
+          bValue = String(b.studentNum || '');
+          break;
+        default:
+          aValue = a.email || '';
+          bValue = b.email || '';
+          break;
+      }
+      
+      return sort.order === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    });
+  };
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -327,7 +393,7 @@ const ClassDetail = () => {
           {/* 학생 목록 탭 */}
           {currentTab === 'students' && (
             <StudentsTab
-              students={filteredAndSortedStudents}
+              students={getFilteredAndSortedStudents()}
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               sort={sort}

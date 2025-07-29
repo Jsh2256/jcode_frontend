@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { userService, courseService } from '../../../services/api';
+import { adminService } from '../../../services/api';
 import { toast } from 'react-toastify';
 
 export const useAdminData = () => {
@@ -15,7 +15,7 @@ export const useAdminData = () => {
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const users = await userService.getAllUsers();
+      const users = await adminService.getAllUsers();
       
       if (!Array.isArray(users)) {
         toast.error('사용자 목록을 불러오는데 실패했습니다.');
@@ -62,7 +62,7 @@ export const useAdminData = () => {
   // 수업 데이터 가져오기
   const fetchCourses = useCallback(async () => {
     try {
-      const courses = await courseService.getAllCourses();
+      const courses = await adminService.getAllCourses();
       
       if (Array.isArray(courses)) {
         setUsers(prev => ({
@@ -88,7 +88,7 @@ export const useAdminData = () => {
   // 사용자 역할 변경
   const handleRoleChange = useCallback(async (userId, newRole) => {
     try {
-      await userService.changeUserRole(userId, newRole);
+      await adminService.changeUserRole(userId, newRole);
       // 성공 토스트는 서비스에서 자동 표시
       fetchUsers(); // 사용자 목록 새로고침
     } catch (error) {

@@ -1,18 +1,84 @@
 import { 
   apiGet, 
   apiPost, 
-  apiDelete, 
-  apiGetWithParams 
+  apiDelete
 } from '../apiHelpers';
-import { refreshTokenRequest } from '../../utils/tokenUtils';
+import { refreshTokenRequest, saveToken, removeToken, getCurrentToken } from '../../utils/tokenUtils';
+import api from '../../api/axios';
 
 /**
  * 인증 관련 API 서비스
+ * 백엔드 API 명세서에 따른 Auth API 구현
  */
 
 const authService = {
   /**
-   * 토큰 갱신 (토큰 유틸리티 사용)
+   * 토큰 발급
+   * POST /api/auth/token
+   */
+  getAccessToken: async (options = {}) => {
+    try {
+      // apiPost 대신 직접 api 호출로 헤더에 접근
+      const response = await api.post('/api/auth/token');
+      
+      // Authorization 헤더에서 토큰 추출
+      const authHeader = response.headers?.['authorization'];
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        saveToken(token);
+        return token;
+      }
+      
+      throw new Error('토큰이 응답 헤더에 없습니다');
+    } catch (error) {
+      if (options.customErrorMessage) {
+        throw new Error(options.customErrorMessage);
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * 일반 회원가입
+   * POST /api/auth/signup
+   */
+  signup: async (registerData, options = {}) => {
+    if (!registerData || !registerData.email || !registerData.password) {
+      throw new Error('이메일과 비밀번호가 필요합니다.');
+    }
+
+    // 필수 필드 검증
+    const requiredFields = ['email', 'studentNum', 'role', 'password'];
+    const missingFields = requiredFields.filter(field => !registerData[field]);
+    
+    if (missingFields.length > 0) {
+      throw new Error(`필수 필드가 누락되었습니다: ${missingFields.join(', ')}`);
+    }
+
+    return apiPost('/api/auth/signup', registerData, {
+      customErrorMessage: '회원가입에 실패했습니다.',
+      ...options
+    });
+  },
+
+  /**
+   * 일반 로그인
+   * POST /api/auth/login/basic
+   */
+  loginBasic: async (loginData, options = {}) => {
+    if (!loginData || !loginData.email || !loginData.password) {
+      throw new Error('이메일과 비밀번호가 필요합니다.');
+    }
+
+    return apiPost('/api/auth/login/basic', loginData, {
+      customErrorMessage: '로그인에 실패했습니다.',
+      ...options
+    });
+  },
+
+  /**
+   * 토큰 리프레시
+   * POST /api/auth/refresh
    */
   refreshToken: async (options = {}) => {
     try {
@@ -27,194 +93,47 @@ const authService = {
   },
 
   /**
+   * OAuth 로그인 (Keycloak)
+   * 기존 방식 유지 - 백엔드에서 리다이렉트 처리
+   */
+  loginOAuth: () => {
+    window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/keycloak`;
+  },
+
+  /**
    * 로그아웃
+   * POST /logout
    */
   logout: async (options = {}) => {
-    return apiPost('/logout', null, {
-      customErrorMessage: '로그아웃에 실패했습니다.',
-      ...options
-    });
-  },
-
-  /**
-   * JCode 리다이렉트 URL 생성
-   */
-  getJCodeRedirect: async (params = {}, options = {}) => {
-    return apiGetWithParams('/api/redirect', params, {
-      customErrorMessage: 'JCode 리다이렉트를 생성할 수 없습니다.',
-      ...options
-    });
-  },
-
-  /**
-   * JCode 리다이렉트 실행
-   */
-  executeJCodeRedirect: async (redirectData, options = {}) => {
-    if (!redirectData) {
-      throw new Error('리다이렉트 데이터가 필요합니다.');
-    }
-
-    return apiPost('/api/redirect', redirectData, {
-      customErrorMessage: 'JCode 리다이렉트 실행에 실패했습니다.',
-      ...options
-    });
-  },
-
-  /**
-   * 현재 인증 상태 확인
-   */
-  checkAuthStatus: async (options = {}) => {
-    return apiGet('/api/auth/status', {
-      customErrorMessage: '인증 상태를 확인할 수 없습니다.',
-      showToast: false,
-      ...options
-    });
-  },
-
-  /**
-   * 세션 연장
-   */
-  extendSession: async (options = {}) => {
-    return apiPost('/api/auth/extend', null, {
-      customErrorMessage: '세션 연장에 실패했습니다.',
-      showToast: false,
-      ...options
-    });
-  },
-
-  /**
-   * 사용자 권한 확인
-   */
-  checkPermission: async (resource, action, options = {}) => {
-    if (!resource || !action) {
-      throw new Error('리소스와 액션이 필요합니다.');
-    }
-
-    return apiGetWithParams('/api/auth/permission', 
-      { resource, action }, 
-      {
-        customErrorMessage: '권한을 확인할 수 없습니다.',
+    try {
+      await apiPost('/logout', null, {
+        customErrorMessage: '로그아웃에 실패했습니다.',
         showToast: false,
         ...options
-      }
-    );
-  },
-
-  /**
-   * 토큰 유효성 검증
-   */
-  validateToken: async (token, options = {}) => {
-    if (!token) {
-      throw new Error('토큰이 필요합니다.');
+      });
+    } catch (error) {
+      // 로그아웃 실패해도 토큰 제거하고 로그인 페이지로
+      console.warn('로그아웃 요청 실패:', error);
+    } finally {
+      removeToken();
+      window.location.href = '/login';
     }
-
-    return apiPost('/api/auth/validate', { token }, {
-      customErrorMessage: '토큰 검증에 실패했습니다.',
-      showToast: false,
-      ...options
-    });
   },
 
   /**
-   * 강제 로그아웃 (모든 세션)
+   * 현재 토큰 가져오기
    */
-  logoutAll: async (options = {}) => {
-    return apiPost('/api/auth/logout-all', null, {
-      customErrorMessage: '전체 로그아웃에 실패했습니다.',
-      ...options
-    });
-  },
+  getCurrentToken,
 
   /**
-   * 비밀번호 변경 (OAuth 아닌 경우)
+   * 토큰 저장
    */
-  changePassword: async (passwordData, options = {}) => {
-    if (!passwordData || !passwordData.currentPassword || !passwordData.newPassword) {
-      throw new Error('현재 비밀번호와 새 비밀번호가 필요합니다.');
-    }
-
-    return apiPost('/api/auth/change-password', passwordData, {
-      customErrorMessage: '비밀번호 변경에 실패했습니다.',
-      ...options
-    });
-  },
+  saveToken,
 
   /**
-   * 이중 인증 활성화
+   * 토큰 제거
    */
-  enable2FA: async (options = {}) => {
-    return apiPost('/api/auth/2fa/enable', null, {
-      customErrorMessage: '이중 인증 활성화에 실패했습니다.',
-      ...options
-    });
-  },
-
-  /**
-   * 이중 인증 비활성화
-   */
-  disable2FA: async (code, options = {}) => {
-    if (!code) {
-      throw new Error('인증 코드가 필요합니다.');
-    }
-
-    return apiPost('/api/auth/2fa/disable', { code }, {
-      customErrorMessage: '이중 인증 비활성화에 실패했습니다.',
-      ...options
-    });
-  },
-
-  /**
-   * 이중 인증 코드 검증
-   */
-  verify2FA: async (code, options = {}) => {
-    if (!code) {
-      throw new Error('인증 코드가 필요합니다.');
-    }
-
-    return apiPost('/api/auth/2fa/verify', { code }, {
-      customErrorMessage: '인증 코드 검증에 실패했습니다.',
-      showToast: false,
-      ...options
-    });
-  },
-
-  /**
-   * API 키 생성
-   */
-  generateApiKey: async (keyData, options = {}) => {
-    if (!keyData || !keyData.name) {
-      throw new Error('API 키 이름이 필요합니다.');
-    }
-
-    return apiPost('/api/auth/api-key', keyData, {
-      customErrorMessage: 'API 키 생성에 실패했습니다.',
-      ...options
-    });
-  },
-
-  /**
-   * API 키 삭제
-   */
-  deleteApiKey: async (keyId, options = {}) => {
-    if (!keyId) {
-      throw new Error('API 키 ID가 필요합니다.');
-    }
-
-    return apiDelete(`/api/auth/api-key/${keyId}`, {
-      customErrorMessage: 'API 키 삭제에 실패했습니다.',
-      ...options
-    });
-  },
-
-  /**
-   * 내 API 키 목록 조회
-   */
-  getMyApiKeys: async (options = {}) => {
-    return apiGet('/api/auth/api-keys', {
-      customErrorMessage: 'API 키 목록을 불러올 수 없습니다.',
-      ...options
-    });
-  }
+  removeToken
 };
 
 export default authService; 

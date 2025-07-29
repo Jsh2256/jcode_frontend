@@ -27,7 +27,7 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import { useTheme } from '../../contexts/ThemeContext';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
-import { auth } from '../../api/axios';
+import { userService } from '../../services/api';
 import { getAvatarUrl } from '../../utils/avatar';
 
 const Navbar = () => {
@@ -51,8 +51,8 @@ const Navbar = () => {
       }
       
       try {
-        const response = await auth.getUserProfile();
-        const { studentNum, name } = response.data;
+        const userData = await userService.getCurrentUser();
+        const { studentNum, name } = userData;
         setIsProfileSet(Boolean(studentNum && name));
         setProfileData({ studentNum, name });
       } catch (error) {

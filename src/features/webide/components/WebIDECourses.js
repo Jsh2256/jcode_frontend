@@ -24,7 +24,7 @@ import {
   IconButton
 } from '@mui/material';
 import { useAuth } from '../../../contexts/AuthContext';
-import { courseService, authService } from '../../../services/api';
+import { userService, jcodeService, redirectService } from '../../../services/api';
 import CodeIcon from '@mui/icons-material/Code';
 import { selectStyles } from '../../../styles/selectStyles';
 import AddIcon from '@mui/icons-material/Add';
@@ -63,7 +63,7 @@ const WebIDECourses = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const courses = await courseService.getMyCourses();
+        const courses = await userService.getMyCourses();
         if (Array.isArray(courses)) {
           setCourses(courses);
           if (courses.length > 0) {
@@ -99,40 +99,37 @@ const WebIDECourses = () => {
     try {
       if (isSnapshot) {
         try {
-          // JCode 생성 API는 별도 서비스 필요 - 임시로 기존 방식 유지
-          await fetch(`${process.env.REACT_APP_API_URL}/api/courses/${courseId}/jcodes`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${sessionStorage.getItem('jwt')}`
-            },
-            credentials: 'include',
-            body: JSON.stringify({
-              userEmail: user.email,
-              snapshot: true
-            })
+          // JCode 생성 (스냅샷용)
+          await jcodeService.createJCode(courseId, {
+            userEmail: user.email,
+            snapshot: true
           });
+          console.log('스냅샷용 JCode 생성 성공');
         } catch (error) {
-          // JCode가 이미 존재하는 경우(403 에러) 무시하고 계속 진행
-          if (error.response?.status !== 403) {
-            throw error; // 403이 아닌 다른 에러는 다시 throw
-          }
+          // JCode가 이미 존재하거나 권한 없음 - 계속 진행
+          console.warn('스냅샷용 JCode 생성 실패 (이미 존재하거나 권한 없음):', error.message);
+          // 403, 404 등의 에러는 예상 가능하므로 계속 진행
         }
       }
 
       // JCode 리다이렉트 실행
-      const redirectData = await authService.executeJCodeRedirect({
+      console.log('JCode 리다이렉트 요청 시작:', { courseId, isSnapshot, userEmail: user.email });
+      
+      const redirectData = await redirectService.redirectToJCode({
         userEmail: user.email,
         courseId: courseId,
         snapshot: isSnapshot
       });
       
-      // 새 탭에서 URL 열기 (응답에서 URL 추출 필요)
-      const finalUrl = redirectData?.url || redirectData?.redirectUrl;
-      if (finalUrl) {
-        window.open(finalUrl, '_blank');
+      console.log('JCode 리다이렉트 응답:', redirectData);
+      
+      // 새 탭에서 URL 열기
+      if (redirectData?.url) {
+        console.log('URL로 리다이렉트:', redirectData.url);
+        window.open(redirectData.url, '_blank');
       } else {
-        throw new Error("리다이렉트 URL을 찾을 수 없습니다");
+        console.error('리다이렉트 URL을 찾을 수 없음:', redirectData);
+        throw new Error("리다이렉트 URL을 찾을 수 없습니다. 서버 응답을 확인해주세요.");
       }
       
     } catch (err) {
@@ -143,31 +140,26 @@ const WebIDECourses = () => {
 
   const handleJoinCourse = async () => {
     try {
-      const joinedCourse = await courseService.joinCourse({
+      const joinedCourse = await userService.joinCourse({
         courseKey: joinDialog.courseKey
       });
       
-      // 수업 참가 성공 후 JCode 생성 API 호출 (임시로 기존 방식 유지)
+      // 수업 참가 성공 후 JCode 생성 시도
       const courseId = joinedCourse.courseId;
       try {
-        await fetch(`${process.env.REACT_APP_API_URL}/api/courses/${courseId}/jcodes`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionStorage.getItem('jwt')}`
-          },
-          credentials: 'include',
-          body: JSON.stringify({
-            userEmail: user.email
-          })
+        await jcodeService.createJCode(courseId, {
+          userEmail: user.email,
+          snapshot: false
         });
+        console.log('강의 참가 후 JCode 생성 성공');
       } catch (jcodeError) {
         // JCode 생성 실패 시 콘솔에만 로그 (치명적 오류가 아니므로)
-        console.warn('JCode 생성 실패:', jcodeError);
+        console.warn('강의 참가 후 JCode 생성 실패:', jcodeError.message);
+        // 대부분의 경우 자동으로 JCode가 생성되거나 이미 존재할 수 있음
       }
       
       // 수업 목록 새로고침
-      const courses = await courseService.getMyCourses();
+      const courses = await userService.getMyCourses();
       setCourses(courses);
       
       // 다이얼로그 닫기 및 초기화
@@ -203,17 +195,17 @@ const WebIDECourses = () => {
     try {
       // JCode 삭제 시도
       try {
-        await authService.deleteJCode(withdrawDialog.courseId);
+        await userService.deleteMyJCode(withdrawDialog.courseId);
       } catch (jcodeError) {
         console.error('JCode 삭제 중 오류:', jcodeError);
         // JCode 삭제 실패 시에도 강의 탈퇴는 계속 진행
       }
 
       // 강의 탈퇴 진행
-      await courseService.leaveCourse(withdrawDialog.courseId);
+      await userService.leaveCourse(withdrawDialog.courseId);
       
       // 강의 목록 새로고침
-      const courses = await courseService.getMyCourses();
+      const courses = await userService.getMyCourses();
       setCourses(courses);
       
       setWithdrawDialog({

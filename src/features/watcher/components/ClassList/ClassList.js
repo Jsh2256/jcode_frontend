@@ -55,6 +55,7 @@ const ClassList = () => {
 
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedTerm, setSelectedTerm] = useState('all');
+  const [isInitialized, setIsInitialized] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [newClass, setNewClass] = useState({
     code: '',
@@ -82,12 +83,13 @@ const ClassList = () => {
   const terms = availableTerms;
 
   useEffect(() => {
-    // 현재 학기로 초기값 설정
-    if (currentSemester) {
+    // 현재 학기로 초기값 설정 (한 번만 실행)
+    if (currentSemester && !isInitialized) {
       setSelectedYear(currentSemester.year);
       setSelectedTerm(currentSemester.term);
+      setIsInitialized(true);
     }
-  }, [currentSemester]);
+  }, [currentSemester, isInitialized]);
 
   // 필터링된 강의 목록 (훅에서 제공)
   const filteredClasses = filterClasses(selectedYear, selectedTerm);

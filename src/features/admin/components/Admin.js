@@ -22,7 +22,7 @@ import {
 } from '@mui/material';
 import { toast } from 'react-toastify';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { userService, courseService } from '../../../services/api';
+import { adminService } from '../../../services/api';
 
 // 새로운 컴포넌트들 import
 import UserManagementTab from './UserManagement/UserManagementTab';
@@ -148,7 +148,7 @@ const Admin = () => {
         }
 
         if (dialogType === 'edit') {
-          await courseService.updateCourse(selectedItem.courseId, {
+          await adminService.updateCourse(selectedItem.courseId, {
             name: formData.courseName,
             code: formData.courseCode,
             term: formData.term,
@@ -157,7 +157,7 @@ const Admin = () => {
             clss: formData.clss
           });
         } else if (dialogType === 'add') {
-          await courseService.createCourse({
+          await adminService.createCourse({
             name: formData.courseName,
             code: formData.courseCode,
             term: formData.term,
@@ -174,10 +174,9 @@ const Admin = () => {
         }
 
         if (dialogType === 'edit') {
-          await userService.updateUser(selectedItem.id, {
-            name: formData.name,
-            studentNum: formData.studentNum
-          });
+          // 백엔드 API 명세에 관리자가 다른 사용자 정보를 수정하는 API가 없음
+          toast.error('사용자 정보 수정 기능은 현재 지원되지 않습니다.');
+          return;
         }
         fetchUsers();
       }
@@ -191,11 +190,11 @@ const Admin = () => {
   const handleDelete = async () => {
     try {
       if (currentTab === 3) {
-        await courseService.deleteCourse(selectedItem.courseId);
+        await adminService.deleteCourse(selectedItem.courseId);
         toast.success(`${selectedItem.courseName} (${selectedItem.courseCode}) 수업이 삭제되었습니다.`);
         fetchCourses();
       } else {
-        await userService.deleteUser(selectedItem.id);
+        await adminService.deleteUser(selectedItem.id);
         toast.success(`${selectedItem.name} (${selectedItem.email}) 사용자가 삭제되었습니다.`);
         fetchUsers();
       }

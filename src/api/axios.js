@@ -9,9 +9,6 @@ import {
   removeToken 
 } from '../utils/tokenUtils';
 
-// 새로운 API 서비스 import (순환 참조 방지를 위해 필요시에만)
-import { userService } from '../services/api';
-
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   headers: {
@@ -93,64 +90,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// Auth 관련 함수들
-export const auth = {
-  login: () => {
-    window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/keycloak`;
-  },
-  
-  getAccessToken: async () => {
-    try {
-      const response = await api.post('/api/auth/token');
-      const authHeader = response.headers['authorization'];
-      
-      if (!authHeader?.startsWith('Bearer ')) {
-        throw new Error('토큰이 응답 헤더에 없습니다');
-      }
-
-      const token = authHeader.substring(7);
-      saveToken(token);
-
-      return token;
-    } catch (error) {
-      // 에러 메시지는 errorHandler에서 처리
-      throw error;
-    }
-  },
-
-  refreshToken,
-
-  logout: async () => {
-    try {
-      // 순환 참조 방지를 위해 직접 구현
-      await api.post('/logout', null);
-      removeToken();
-      window.location.href = '/login';
-    } catch (error) {
-      // 로그아웃 실패해도 토큰 제거하고 로그인 페이지로
-      removeToken();
-      window.location.href = '/login';
-    }
-  },
-
-  getUserProfile: async () => {
-    try {
-      const data = await userService.getCurrentUser();
-      return { data }; // 기존 인터페이스 유지
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  updateUserProfile: async (profileData) => {
-    try {
-      const data = await userService.updateCurrentUser(profileData);
-      return { data }; // 기존 인터페이스 유지  
-    } catch (error) {
-      throw error;
-    }
-  },
-};
 
 export default api; 
