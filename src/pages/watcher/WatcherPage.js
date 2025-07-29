@@ -1,9 +1,9 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import ClassList from '../../components/watcher/ClassList';
-import ClassDetail from '../../components/watcher/ClassDetail';
-import AssignmentDetail from '../../components/watcher/AssignmentDetail';
-import AssignmentMonitoring from '../../components/watcher/AssignmentMonitoring';
+import ClassList from '../../features/watcher/components/ClassList';
+import ClassDetail from '../../features/watcher/components/ClassDetail';
+import AssignmentDetail from '../../features/watcher/components/AssignmentDetail';
+import AssignmentMonitoring from '../../features/watcher/components/AssignmentMonitoring';
 
 const WatcherPage = () => {
   return (

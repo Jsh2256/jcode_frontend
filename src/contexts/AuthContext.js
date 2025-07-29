@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { auth } from '../api/axios';
+import { authService } from '../services/api';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext(null);
@@ -52,12 +52,19 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = () => {
-    auth.login();
+    window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/keycloak`;
   };
 
-  const logout = () => {
-    setUser(null);
-    auth.logout();
+  const logout = async () => {
+    try {
+      setUser(null);
+      await authService.logout();
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+      // 실패해도 로컬 상태는 정리
+      sessionStorage.removeItem('jwt');
+      window.location.href = '/login';
+    }
   };
 
   const value = {

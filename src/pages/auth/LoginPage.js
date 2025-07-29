@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import Login from '../../components/auth/Login';
+import { Login } from '../../features/auth';
 
 const LoginPage = () => {
   return (

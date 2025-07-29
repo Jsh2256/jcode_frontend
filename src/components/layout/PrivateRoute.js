@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { auth } from '../../api/axios';
+import { userService } from '../../services/api';
 
 const PrivateRoute = ({ roles, children }) => {
   const { user, isAuthenticated } = useAuth();
@@ -11,8 +11,8 @@ const PrivateRoute = ({ roles, children }) => {
   useEffect(() => {
     const checkProfile = async () => {
       try {
-        const response = await auth.getUserProfile();
-        const { studentNum, name } = response.data;
+        const userData = await userService.getCurrentUser();
+        const { studentNum, name } = userData;
         setIsProfileSet(Boolean(studentNum && name));
       } catch (error) {
         setIsProfileSet(false);

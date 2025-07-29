@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import WebIDECourses from '../../components/webide/WebIDECourses';
+import { WebIDECourses } from '../../features/webide';
 
 const WebIDEPage = () => {
   return (
